@@ -4,7 +4,9 @@
   "description": "ブログ記事プラットフォーム Zennと連携するためのリポジトリです。",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "new:article": "npx zenn new:article",
+    "new:book": "npx zenn new:book",
+    "preview": "npx zenn preview"
   },
   "keywords": [],
   "author": "",
