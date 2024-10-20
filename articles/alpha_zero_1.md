@@ -67,14 +67,14 @@ Aleph Zeroのユニークな特徴として以下の2点が挙げられます。
   https://drpc.org/faucet/alephzero
 
 - #### Aleph Zero WASM L1
-  Aleph Zero WASM L1は、RustのeDSLである**ink!**を利用し、WASMにコンパイルされるLayer 1スマートコントラクトパレットです。
+  Aleph Zero WASM L1は、RustのeDSLである **ink!** を利用し、WASMにコンパイルされるLayer 1スマートコントラクトパレットです。
 
-  **1nk!**は、Astar NetworkでWASM用のスマートコントラクトを開発する時にも利用されるプログラミング言語です。
+  **1nk!** は、Astar NetworkでWASM用のスマートコントラクトを開発する時にも利用されるプログラミング言語です。
   　
   サブセカンドのファイナリティを特徴とし、約170のバリデータノードが稼働しています。
 
 - #### AlephBFT
-  AlephBFTは、2019年のAdvances in Financial Technologies（AFT）会議で発表されたピアレビュー済みのコンセンサスアルゴリズムです。**Proof of Stake（PoS）と有向非巡回グラフ（DAG）**を組み合わせた手法を採用しています。これにより、高速な取引処理、低コスト、優れたスケーラビリティを実現しています。
+  AlephBFTは、2019年のAdvances in Financial Technologies（AFT）会議で発表されたピアレビュー済みのコンセンサスアルゴリズムです。**Proof of Stake（PoS）と有向非巡回グラフ（DAG）** を組み合わせた手法を採用しています。これにより、高速な取引処理、低コスト、優れたスケーラビリティを実現しています。
 
 - #### Aleph Zero Data Availability Layer
   Aleph Zeroの低コストなストレージ手数料と高いスループットを活用し、他のチェーンがデータを保存するためのレイヤーとして利用できます。
