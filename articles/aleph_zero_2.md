@@ -3,7 +3,7 @@ title: "Hardhatを使ってAlephZero(EVM Layer)にスマートコントラクト
 emoji: "🛠"
 type: "tech"
 topics: ["Web3","Blockchain","ゼロ知識証明","EVM","Solidity"]
-published: false
+published: true
 ---
 
 ![](/images/aleph_zero_2/0.jpeg)
