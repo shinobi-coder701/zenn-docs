@@ -3,7 +3,7 @@ title: "Aleph Zeroを学ぼう！！"
 emoji: "✨"
 type: "tech" 
 topics: ["Web3","Blockchain","ゼロ知識証明","EVM","WASM"]
-published: false
+published: true
 ---
 
 ![](/images/alpha_zero_1/0.jpeg)
