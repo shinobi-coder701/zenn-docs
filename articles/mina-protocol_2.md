@@ -23,3 +23,19 @@ https://app.akindo.io/wave-hacks/ENw9p7R6nUz818lo1
 ファウンダーである金城さんの想いがまとめられています！！！
 
 https://note.com/shinkinjo/n/n313d1e931ebf
+
+## 今回使うコード
+
+今回使うコードは以下に格納されています。
+
+https://github.com/mashharuki/mina-protocol-workshop-slides/tree/2024-devcon-main
+
+Fork 元のコードは **Devcon** 期間中に開催されたワークショップのコードです！
+
+## デモ
+
+## コードの解説
+
+## 動かし方
+
+### 参考文献
