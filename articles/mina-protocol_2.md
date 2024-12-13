@@ -24,6 +24,14 @@ https://app.akindo.io/wave-hacks/ENw9p7R6nUz818lo1
 
 https://note.com/shinkinjo/n/n313d1e931ebf
 
+## Mina Protocolとは
+
+Mina ProtocolはO(1)Labsにより2017年6月から開発されているL1のスマートコントラクトプラットフォームです。
+
+**o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
+
+また、ただのスマートコントラクトではなくゼロ知識証明をフル活用した **ZK App**を開発することができるプロトコルになっています！！
+
 ## 今回使うコード
 
 今回使うコードは以下に格納されています。
@@ -32,10 +40,33 @@ https://github.com/mashharuki/mina-protocol-workshop-slides/tree/2024-devcon-mai
 
 Fork 元のコードは **Devcon** 期間中に開催されたワークショップのコードです！
 
-## デモ
-
 ## コードの解説
 
 ## 動かし方
 
+## もっと MinaProtocolを学びたい人は・・・
+
+この記事を読んでもっと MinaProtocolを勉強したいと思った人は以下のYoutubeが参考になります！
+
+https://www.youtube.com/watch?v=LLule5GUkkg&t=4116s
+
+https://www.youtube.com/watch?v=hEHxBJNWkJo
+
+https://www.youtube.com/live/_sklhKIPobM
+
 ### 参考文献
+
+今回のコードを実装する上で参考になった文献のリンクを共有します！
+
+1. [writing-a-zkapp](https://docs.minaprotocol.com/zkapps/writing-a-zkapp)
+2. [zkapp-development-frameworks](https://docs.minaprotocol.com/zkapps/zkapp-development-frameworks)
+3. [GitHub - mina-fungible-token](https://github.com/MinaFoundation/mina-fungible-token)
+4. [Mina Fungible Token Documentation](https://minafoundation.github.io/mina-fungible-token/deploy.html)
+5. [examples/zkapps/](https://github.com/o1-labs/docs2/tree/main/examples/zkapps/)
+6. [Mina Foundation Online Workshop for Building ZKApps with o1js](https://www.youtube.com/watch?v=LLule5GUkkg&t=4116s)
+7. [作成した開発用ウォレット](https://minascan.io/devnet/tx/5JuPC4hhNb83ufKmuRtj97jSSbdDURLTwTb6vmJL6k3Bv7Zi6uA7)
+8. [ファウセット用リンク](https://faucet.minaprotocol.com/?address=B62qoFHxcia11kauLdy6f9B8yfB9QUkMRDTJhrXoKEgkuDzDSGU9MgU&explorer=minascan)
+9. [mina-fungible-token Docs](https://minafoundation.github.io/mina-fungible-token/)
+10. [interacting-with-zkapps-server-side](https://docs.minaprotocol.com/zkapps/tutorials/interacting-with-zkapps-server-side)
+11. [Tutorial 4: Build a zkApp UI in the Browser with React](https://docs.minaprotocol.com/zkapps/tutorials/zkapp-ui-with-react)
+12. [GitHub - o1-labs-XT/workshop-slides](https://github.com/o1-labs-XT/workshop-slides/tree/main)
