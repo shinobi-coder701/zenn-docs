@@ -24,9 +24,9 @@ https://app.akindo.io/wave-hacks/ENw9p7R6nUz818lo1
 
 https://note.com/shinkinjo/n/n313d1e931ebf
 
-## Mina Protocolとは
+## Mina Protocol とは
 
-Mina ProtocolはO(1)Labsにより2017年6月から開発されているL1のスマートコントラクトプラットフォームです。
+Mina Protocol は O(1)Labs により 2017 年 6 月から開発されている L1 のスマートコントラクトプラットフォームです。
 
 **o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
 
@@ -46,14 +46,22 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 今回実装したものは非常にシンプルなもので以下の 4 つの機能です。
 
-- 新しい鍵ペアを生成する機能
-- トークンを新しくデプロイする機能
-- トークンをミントする機能
-- トークンを送金する機能
+- **新しい鍵ペアを生成する機能**
+- **トークンを新しくデプロイする機能**
+- **トークンをミントする機能**
+- **トークンを送金する機能**
 
 ## コードの解説
 
+ここからはコードの解説をしていきます。
+
+スマートコントラクトとトークンをデプロイしたり送金したりするコードの解説になります！！
+
 - **FungibleToken** コントラクト
+
+  まずは、FungibleToken コントラクトのソースコードの解説から！
+
+  書きっぷりは、TypeScript ですが、Solidty で ERC20 トークンを実装したことがある人なら見覚えのある実装なのではないでしょうか？？
 
   ```ts
   import {
@@ -87,7 +95,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   }
 
   /**
-   * Errors
+   * エラーの定義
    */
   export const FungibleTokenErrors = {
     noAdminKey: "could not fetch admin contract key",
@@ -105,7 +113,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   };
 
   ////////////////////////////////////////////////////////////////////////////////////////
-  // Events
+  // 処理に応じて発火させるイベントの定義
   ////////////////////////////////////////////////////////////////////////////////////////
 
   export class SetAdminEvent extends Struct({
@@ -132,7 +140,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   }) {}
 
   /**
-   * FungibleToken Contract
+   * FungibleToken Contractクラス
    */
   export class FungibleToken extends TokenContractV2 {
     // 変数の定義
@@ -158,7 +166,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
     };
 
     /**
-     * deploy メソッド
+     * deploy メソッド これでトークンをデプロイする。
      * @param props
      */
     async deploy(props: FungibleTokenDeployProps) {
@@ -240,7 +248,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
     }
 
     /**
-     * mint method
+     * トークンをミントするメソッド
      * @param recipient
      * @param amount
      * @returns
@@ -253,12 +261,14 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
       // mint
       const accountUpdate = this.internal.mint({ address: recipient, amount });
       const adminContract = await this.getAdminContract();
+      // mint可能かどうかチェック
       const canMint = await adminContract.canMint(accountUpdate);
       canMint.assertTrue(FungibleTokenErrors.noPermissionToMint);
       recipient
         .equals(this.address)
         .assertFalse(FungibleTokenErrors.noTransferFromCirculation);
       this.approve(accountUpdate);
+      // イベント発火
       this.emitEvent("Mint", new MintEvent({ recipient, amount }));
       const circulationUpdate = AccountUpdate.create(
         this.address,
@@ -269,7 +279,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
     }
 
     /**
-     * burn method
+     * トークンをバーンするメソッド
      * @param from
      * @param amount
      * @returns
@@ -279,6 +289,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
       this.paused
         .getAndRequireEquals()
         .assertFalse(FungibleTokenErrors.tokenPaused);
+      // トークンをバーンする。
       const accountUpdate = this.internal.burn({ address: from, amount });
       const circulationUpdate = AccountUpdate.create(
         this.address,
@@ -288,6 +299,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
         .equals(this.address)
         .assertFalse(FungibleTokenErrors.noTransferFromCirculation);
       circulationUpdate.balanceChange = Int64.fromUnsigned(amount).negV2();
+      // イベントを発火させる。
       this.emitEvent("Burn", new BurnEvent({ from, amount }));
       return accountUpdate;
     }
@@ -317,7 +329,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
     }
 
     /**
-     * transfer method
+     * トークンを移転させるメソッド
      * @param from
      * @param to
      * @param amount
@@ -333,6 +345,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
       to.equals(this.address).assertFalse(
         FungibleTokenErrors.noTransferFromCirculation
       );
+      // トークンを移転させる。
       this.internal.send({ from, to, amount });
     }
 
@@ -440,6 +453,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - **FungibleTokenAdmin** コントラクト
+
+  トークン操作用の権限等を管理するコントラクトです。
+
+  FungibleToken コントラクトの中で `canMint`など権限周りをチェックするロジックが含まれていましたが、その機能が実装されているコントラクトです。
 
   ```ts
   import {
@@ -567,6 +584,16 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 - 新しい鍵ペアを生成するコード
 
+  新しいウォレットを生成するためのコードです。
+
+  まず最初に鍵ペアの生成が必要な点は Ethereum でも同じですよね！！
+
+  今回は動かすために 3 つの鍵ペアを作成します！！
+
+  - トークンコントラクト用
+  - Admin 用
+  - Deployer 用
+
   ```ts
   import { PrivateKey } from "o1js";
 
@@ -579,6 +606,12 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - 新しくトークンをデプロイするコード
+
+  以下のコードは、トークンをデプロイするスクリプトのコードです！
+
+  具体的には、 FungibleToken コントラクトの`deploy`メソッドを呼び出します！！
+
+  書き方は独特ですが、トランザクションデータを作ってから署名＆送信という流れはこれまでのブロックチェーンと同じです！！
 
   ```ts
   import * as dotenv from "dotenv";
@@ -638,9 +671,9 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   const owner = PublicKey.fromPrivateKey(ownerKey);
   const deployer = PublicKey.fromPrivateKey(deployerKey);
   const adminer = PublicKey.fromPrivateKey(admin);
-
+  // コントラクトのデプロイ
   const fungibleTokenAdmin = new FungibleTokenAdmin(adminAddress);
-
+  // トークン名や初期発行量などを定義
   const supply = UInt64.from(21_000_000);
   const symbol = "MashTN";
   const src =
@@ -650,19 +683,21 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
   console.log("Deploying token");
 
-  // deploy the token
+  // トークンをデプロイするためのトランザクションデータを作成する。
   const tx = await Mina.transaction({ sender: deployer, fee }, async () => {
     AccountUpdate.fundNewAccount(deployer, 3);
+    // deployメソッドの呼び出し。
     await fungibleTokenAdmin.deploy({ adminPublicKey: adminAddress });
     await token.deploy({
       symbol,
       src,
     });
+    // initialeizeメソッドの呼び出し
     await token.initialize(adminAddress, UInt8.from(9), Bool(false));
   });
 
   await tx.prove();
-  // sign & send Tx
+  // トランザクションに署名＆送信
   tx.sign([deployerKey, tokenKey, adminKey]);
   let pendingTransaction = await tx.send();
 
@@ -681,6 +716,8 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - トークンをミントするコード
+
+  次に、トークンをデプロイした後に呼び出すミント用のスクリプトのコードを解説したいと思います！！
 
   ```ts
   import * as dotenv from "dotenv";
@@ -732,7 +769,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
   console.log("Minting token");
 
-  // Mint token transaction
+  // トークンをミントするトランザクションデータ
   const mintTx = await Mina.transaction(
     {
       sender: owner,
@@ -743,7 +780,9 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
       await token.mint(owner, new UInt64(2e9));
     }
   );
+
   await mintTx.prove();
+  // トランザクションへの署名＆送信を行う。
   mintTx.sign([ownerKey, adminKey]);
   const mintTxResult = await mintTx.send().then((v) => v.wait());
   console.log("Mint tx result:", mintTxResult.toPretty());
@@ -760,6 +799,8 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - トークンを送金するコード
+
+  トークンをミントした後は送金処理を行いたいので、次に送金用のスクリプトを確認していきます。
 
   ```ts
   import * as dotenv from "dotenv";
@@ -850,6 +891,8 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   console.log("owner balance before transfer:", adminBalanceAfterTransfer);
   ```
 
+  長かったですが、コードの解説はここまでになります！！！
+
 ## 動かし方
 
 ここからは実際にコードを実行するためのコマンドとトランザクション履歴を共有していきます！
@@ -904,9 +947,9 @@ https://minascan.io/devnet/tx/5JumaqMFAF1MeygQHmCvb9662rGC6FtB43z9URbEpEMzvG2TtZ
 
 https://minascan.io/devnet/token/xR7E8xvJo2bX2kFGLSqrA9XTrdZRq1L89BdLxt9N3gCGqonqyn/holders
 
-## もっと MinaProtocolを学びたい人は・・・
+## もっと MinaProtocol を学びたい人は・・・
 
-この記事を読んでもっと MinaProtocolを勉強したいと思った人は以下のYoutubeが参考になります！
+この記事を読んでもっと **MinaProtocol** を勉強したいと思った人は以下の **Youtube** が参考になります！
 
 https://www.youtube.com/watch?v=LLule5GUkkg&t=4116s
 
