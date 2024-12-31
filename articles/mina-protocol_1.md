@@ -28,6 +28,8 @@ https://note.com/shinkinjo/n/n313d1e931ebf
 
 Mina Protocol は O(1)Labs により 2017 年 6 月から開発されている L1 のスマートコントラクトプラットフォームです。
 
+https://minaprotocol.com/
+
 **o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
 
 また、ただのスマートコントラクトではなくゼロ知識証明をフル活用した **ZK App**を開発することができるプロトコルになっています！！
