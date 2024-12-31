@@ -59,6 +59,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 - **FungibleToken** コントラクト
 
+  :::message
+  FungibleToken.ts の中身です！
+  :::
+
   まずは、FungibleToken コントラクトのソースコードの解説から！
 
   書きっぷりは、TypeScript ですが、Solidty で ERC20 トークンを実装したことがある人なら見覚えのある実装なのではないでしょうか？？
@@ -454,6 +458,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 - **FungibleTokenAdmin** コントラクト
 
+  :::message
+  FungibleTokenAdmin.ts の中身です！
+  :::
+
   トークン操作用の権限等を管理するコントラクトです。
 
   FungibleToken コントラクトの中で `canMint`など権限周りをチェックするロジックが含まれていましたが、その機能が実装されているコントラクトです。
@@ -584,6 +592,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 - 新しい鍵ペアを生成するコード
 
+  :::message
+  examples/generate_keys.ts の中身です！
+  :::
+
   新しいウォレットを生成するためのコードです。
 
   まず最初に鍵ペアの生成が必要な点は Ethereum でも同じですよね！！
@@ -606,6 +618,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - 新しくトークンをデプロイするコード
+
+  :::message
+  examples/deploy_devnet.ts の中身です！
+  :::
 
   以下のコードは、トークンをデプロイするスクリプトのコードです！
 
@@ -717,6 +733,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 
 - トークンをミントするコード
 
+  :::message
+  examples/mint_devnet.ts の中身です！
+  :::
+
   次に、トークンをデプロイした後に呼び出すミント用のスクリプトのコードを解説したいと思います！！
 
   ```ts
@@ -799,6 +819,10 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
   ```
 
 - トークンを送金するコード
+
+  :::message
+  examples/transfer_devnet.ts の中身です！
+  :::
 
   トークンをミントした後は送金処理を行いたいので、次に送金用のスクリプトを確認していきます。
 
@@ -901,7 +925,7 @@ https://app.akindo.io/hackathons/d8QRPgkrNCxGZ3Ea
 以下のコードは、 `fungible-token-sample` ディレクトリ内で実行してください！
 :::
 
-- インストール
+- 依存関係のインストール
 
   ```bash
   npm i
@@ -943,7 +967,9 @@ https://minascan.io/devnet/tx/5Jur32w1Xc6juesY9hGNbV4AAfABsWxK22RrMNvUiWnNuzbatu
 
 https://minascan.io/devnet/tx/5JumaqMFAF1MeygQHmCvb9662rGC6FtB43z9URbEpEMzvG2TtZFL
 
-以下はトークンホルダー一覧です。
+- トークンホルダーの確認方法
+
+  以下のページでこのトークンを保有しているアドレスの一覧が確認できます。
 
 https://minascan.io/devnet/token/xR7E8xvJo2bX2kFGLSqrA9XTrdZRq1L89BdLxt9N3gCGqonqyn/holders
 
@@ -957,7 +983,7 @@ https://www.youtube.com/watch?v=hEHxBJNWkJo
 
 https://www.youtube.com/live/_sklhKIPobM
 
-### 参考文献
+## 参考文献
 
 今回のコードを実装する上で参考になった文献のリンクを共有します！
 

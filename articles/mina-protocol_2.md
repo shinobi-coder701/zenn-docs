@@ -24,9 +24,9 @@ https://app.akindo.io/wave-hacks/ENw9p7R6nUz818lo1
 
 https://note.com/shinkinjo/n/n313d1e931ebf
 
-## Mina Protocolとは
+## Mina Protocol とは
 
-Mina ProtocolはO(1)Labsにより2017年6月から開発されているL1のスマートコントラクトプラットフォームです。
+Mina Protocol は O(1)Labs により 2017 年 6 月から開発されている L1 のスマートコントラクトプラットフォームです。
 
 **o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
 
@@ -44,9 +44,9 @@ Fork 元のコードは **Devcon** 期間中に開催されたワークショッ
 
 ## 動かし方
 
-## もっと MinaProtocolを学びたい人は・・・
+## もっと MinaProtocol を学びたい人は・・・
 
-この記事を読んでもっと MinaProtocolを勉強したいと思った人は以下のYoutubeが参考になります！
+この記事を読んでもっと MinaProtocol を勉強したいと思った人は以下の Youtube が参考になります！
 
 https://www.youtube.com/watch?v=LLule5GUkkg&t=4116s
 
@@ -54,7 +54,7 @@ https://www.youtube.com/watch?v=hEHxBJNWkJo
 
 https://www.youtube.com/live/_sklhKIPobM
 
-### 参考文献
+## 参考文献
 
 今回のコードを実装する上で参考になった文献のリンクを共有します！
 
