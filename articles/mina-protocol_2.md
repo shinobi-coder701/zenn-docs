@@ -32,6 +32,8 @@ https://minaprotocol.com/
 
 **o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
 
+https://docs.minaprotocol.com/zkapps/o1js
+
 また、ただのスマートコントラクトではなくゼロ知識証明をフル活用した **ZK App**を開発することができるプロトコルになっています！！
 
 ## 今回使うコード

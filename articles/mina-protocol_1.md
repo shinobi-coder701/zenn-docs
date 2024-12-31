@@ -3,7 +3,7 @@ title: "MinaProtocolにトークンをデプロイしてみた！"
 emoji: "🛠"
 type: "tech"
 topics: ["Web3", "Blockchain", "ゼロ知識証明", "TypeScript", "zk"]
-published: false
+published: true
 ---
 
 ![](/images/mina-protocol_1/0.jpeg)
@@ -31,6 +31,8 @@ Mina Protocol は O(1)Labs により 2017 年 6 月から開発されている L
 https://minaprotocol.com/
 
 **o1js** というライブラリを使って **TypeScript** でスマートコントラクトを実装することができます！！
+
+https://docs.minaprotocol.com/zkapps/o1js
 
 また、ただのスマートコントラクトではなくゼロ知識証明をフル活用した **ZK App**を開発することができるプロトコルになっています！！
 
