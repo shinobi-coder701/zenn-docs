@@ -3,7 +3,7 @@ title: "AI AgentでDeFAIを作ってみて分かったこと！"
 emoji: "🔨"
 type: "tech"
 topics: ["AIAgent", "OpenAI", "Web3", "LangChain", "TypeScript"]
-published: false
+published: true
 ---
 
 ![0.jpg](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/1299653/0b1e29d0-2657-44b1-83c7-02026e65e7af.jpeg)
