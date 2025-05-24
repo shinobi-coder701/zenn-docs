@@ -3,7 +3,7 @@ title: "Reownを使ってWeb3アプリを作ってみた！"
 emoji: "🤖"
 type: "tech"
 topics: ["Solana", "Web3", "TypeScript", "ブロックチェーン", "生成AI"]
-published: false
+published: true
 ---
 
 ![](/images/reown_solana_dapp/title.png)
