@@ -60,9 +60,13 @@ npm install @reown/appkit @coral-xyz/anchor @reown/appkit-adapter-solana @solana
 
 ここまできたら必要な設定ファイルを用意して、 `<appkit-button>` を埋め込めば準備 OK です！
 
-- 設定ファイル(config.ts)の実装
+- **設定ファイル(config.ts)の実装**
+
+  <br/>
 
   環境変数の読み込みや対応するチェーンの種類などを定義します。
+
+  <br/>
 
   今回はメインネット、テストネット、Dev ネットを指定しています。
 
@@ -88,7 +92,9 @@ npm install @reown/appkit @coral-xyz/anchor @reown/appkit-adapter-solana @solana
   export const solanaWeb3JsAdapter = new SolanaAdapter();
   ```
 
-- `createAppKit` で AppKit インスタンスを生成
+- **`createAppKit` で AppKit インスタンスを生成**
+
+  <br/>
 
   上記設定ファイルを読み込んで **AppKit** を生成させます。
 
