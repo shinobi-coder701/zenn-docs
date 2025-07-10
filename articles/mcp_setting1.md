@@ -3,7 +3,7 @@ title: "MCP動かすときの環境変数どう読み込ませてる？"
 emoji: "🔐"
 type: "tech" 
 topics: ["生成AI", "MCP", "VSCode", "環境変数", "AIエージェント"]
-published: false
+published: true
 ---
 
 ## はじめに
