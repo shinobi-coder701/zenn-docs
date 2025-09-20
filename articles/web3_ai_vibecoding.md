@@ -3,7 +3,7 @@ title: "Kiro×CodeXで最高のSpec駆動開発を！数時間でWeb3ネイテ�
 emoji: "🛠️"
 type: "tech"
 topics: ["web3", "生成AI", "zennfes2025ai", "kiro", "CodeX"]
-published: false
+published: true
 ---
 
 ![](/images/web3_ai_vibecoding/overview.png)
