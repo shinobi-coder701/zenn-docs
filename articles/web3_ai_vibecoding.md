@@ -2,7 +2,7 @@
 title: "Kiro×CodeXで最高のSpec駆動開発を！数時間でWeb3ネイティブなアプリを開発してハッカソンで入賞した話"
 emoji: "🛠️"
 type: "tech"
-topics: ["web3", "生成AI", "Spec駆動開発", "kiro", "CodeX"]
+topics: ["web3", "生成AI", "zennfes2025ai", "kiro", "CodeX"]
 published: false
 ---
 
