@@ -2,12 +2,7 @@
 title: AWSコスト見積もりエージェントを自作！Bedrock AgentCoreワークショップで学んだ、ローカルからクラウドデプロイまで
 emoji: 📈
 type: tech
-topics:
-  - aws
-  - Bedrock
-  - serverless
-  - python
-  - 生成AI
+topics: ["AWS", "Bedrock", "Bedrock AgentCore", "python", "zennfes2025ai"]
 published: true
 ---
 
