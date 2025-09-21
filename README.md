@@ -16,8 +16,6 @@
   npx zenn new:article --slug 記事のスラッグ --title タイトル --type tech --emoji 🛠
   ```
 
-  npx zenn new:article --slug web3_ai_vibecoding --title Kiro×CodeXで最高のSpec駆動開発を！数時間でWeb3ネイティブなアプリを開発してハッカソンで入賞した話 --type tech --emoji 🛠
-
 - 👇 新しい本を作成する
 
   ```bash
