@@ -24,6 +24,10 @@ https://aws.amazon.com/jp/what-is/apache-iceberg/
 
 ぜひ最後まで読んでいってください！
 
+下佐粉さんのスライドとても分かりやすいです！！
+
+https://speakerdeck.com/simosako/apache-icebergwoti-yan-siyou-20250921
+
 従来のデータレイク運用では、パフォーマンスの維持、スキーマ変更への追従、データの一貫性確保など、多くの課題に頭を悩ませてきました。
 
 しかし、このワークショップで体験した **Amazon Athena × Apache Iceberg** の組み合わせは、これらの課題を解決するアプローチとなっています。
