@@ -6,7 +6,7 @@ topics: ["AWS", "Bedrock", "AgentCore", "python", "zennfes2025ai"]
 published: true
 ---
 
-![](/images/aws-agentcore_1/title.png)
+![](/images/aws-agentcore_1/title.jpeg)
 
 ## はじめに
 
