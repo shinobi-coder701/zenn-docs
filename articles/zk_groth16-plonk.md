@@ -6,6 +6,8 @@ topics: ["暗号技術", "ゼロ知識証明", "Web3", "ブロックチェーン
 published: true
 ---
 
+![](/images/zk_groth16-plonk/overview.png)
+
 ## はじめに
 
 「ゼロ知識証明（Zero-Knowledge Proof, ZKP）」という言葉を耳にしたことはありますか？ 🤔
