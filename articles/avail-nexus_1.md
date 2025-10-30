@@ -98,9 +98,9 @@ Availは単なるDAレイヤーの提供に留まらず、断片化したWeb3の
 graph TD
     subgraph "Avail Unification Stack"
         direction LR
-        DA(<b>Avail DA</b><br>強固なデータの土台)
-        Nexus(<b>Avail Nexus</b><br>チェーン間の自動翻訳機)
-        Fusion(<b>Avail Fusion</b><br>みんなで守る最強セキュリティ)
+        DA(**Avail DA**<br>強固なデータの土台)
+        Nexus(**Avail Nexus**<br>チェーン間の自動翻訳機)
+        Fusion(**Avail Fusion**<br>みんなで守る最強セキュリティ)
 
         DA -- "データはここに" --> Nexus
         Nexus -- "安全は任せろ" --> Fusion
