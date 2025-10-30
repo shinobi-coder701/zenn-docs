@@ -3,7 +3,7 @@ title: "【初心者向け】Availで学ぶモジュラーブロックチェー�
 emoji: "🛠"
 type: "tech"
 topics: ["web3", "blockchain", "avail", "typescript", "nextjs"]
-published: false
+published: true
 ---
 
 ![](/images/avail-nexus_1/overview.png)
@@ -24,14 +24,18 @@ Web3の世界に足を踏み入れた多くの人が、一度はこんな経験�
 
 ![](/images/avail-nexus_1/0.png)
 
-この記事では、伝説のエンジニアブロガーである私が、以下の内容をストーリー仕立てで、世界一わかりやすく解説します。
+**モジュラーブロックチェーン** ってなんだか難しそうですよね...
 
-- 🤔 **モジュラーブロックチェーンって何？** なぜ今注目されているの？
-- 🥑 **Availってどんなプロジェクト？** 何がすごいの？
-- ✨ **Avail Nexus SDK** が実現する、魔法のようなユーザー体験（UX）とは？
-- 💻 **実践！** Next.jsを使って、未来のマルチチェーンDApp開発を体験してみよう！
+僕も最初挫折しました。
 
-Web3の未来を先取りしたいすべての開発者、そしてユーザー必見の内容です。さあ、一緒に未来への旅に出かけましょう！
+でもハッカソンで Availを調べる機会があり、 **Nexus SDK** にも触れてみて分かったことがあるのでそれを皆さんにも共有したいと思います！
+
+- 🤔 **モジュラーブロックチェーンって何？**
+- 🥑 **Availってどんなプロジェクト？** 
+- ✨ **Avail Nexus SDK** が実現する魔法のようなユーザー体験（UX）とは？
+- 💻 **実践！** サンプルアプリケーションで **Nexus SDK** を体験してみよう！
+
+Web3の未来を先取りしたいすべての開発者、そしてユーザー必見の内容です！！
 
 ## 第1章：<br/>モジュラーブロックチェーンとは？〜巨大レストランの厨房改革〜
 
@@ -39,9 +43,9 @@ Availを理解するために、まずはその根幹技術である「モジュ
 
 ### モノリシック vs モジュラー
 
-従来のブロックチェーン（Bitcoinや初期のEthereumなど）は、**モノリシック（一枚岩）** と呼ばれます。
+従来のブロックチェーン（Bitcoinや初期のEthereumなど）は、**モノリシック（一枚岩）** 型のブロックチェーンで必要な機能が全て一つのプロトコルの中に詰まっています。
 
-これは、ブロックチェーンが担うべき4つの主要な仕事（機能）を、すべて単一のレイヤーで処理しているからです。
+具体的にはブロックチェーンが担うべき4つの主要な仕事（機能）をすべて単一のレイヤーで処理していることを意味します。
 
 1.  **実行 (Execution):** 
   トランザクション（取引）を処理し、スマートコントラクトのコードを実行する。
@@ -52,15 +56,21 @@ Availを理解するために、まずはその根幹技術である「モジュ
 4.  **データ可用性 (Data Availability / DA):** 
   トランザクションのデータがネットワーク上の誰もが検証できるように「利用可能」であることを保証する。
 
-これを巨大レストランの厨房に例えるなら、「一人のスーパースターシェフが、注文受けから調理、盛り付け、配膳まで全部一人でこなしている」ような状態です。これでは、お店が繁盛して注文が殺到すると、シェフがパンクしてしまいますよね。
+:::message
+これを巨大レストランの厨房に例えるなら、「一人のスーパースターシェフが、注文受けから調理、盛り付け、配膳まで全部一人でこなしている」ような状態です
+:::
 
-そこで登場したのが**モジュラーブロックチェーン**です。
+これでは、お店が繁盛して注文が殺到すると、シェフがパンクしてしまいますよね。
 
-これは、先ほどの4つの仕事をそれぞれ専門のレイヤー（モジュール）に分割し、分業させるアプローチです。
+そこで登場したのが**モジュラーブロックチェーン**という概念です。
 
+これは先ほどの4つの仕事をそれぞれ専門のレイヤー（モジュール）に分割し、分業させるアプローチです。
+
+:::message
 レストランの例で言えば、「注文を受ける係、前菜を作るシェフ、メインディッシュを作るシェフ、デザートを作るパティシエ…」と専門家チームを結成するようなものです。
+:::
 
-これにより、各担当者は自分の仕事に専念でき、厨房全体のスループット（処理能力）が劇的に向上します。
+これにより各担当者は自分の仕事に専念でき、厨房全体のスループット（処理能力）が劇的に向上すると考えられ一時期話題となりました！
 
 ```mermaid
 graph TD
@@ -76,7 +86,7 @@ graph TD
     end
 ```
 
-この **「データ可用性（DA）」** レイヤーこそが、モジュラーブロックチェーンの心臓部であり、Availがその専門家として名乗りを上げている領域なのです。
+そして **「データ可用性（DA）」** レイヤーがモジュラーブロックチェーンの心臓部であり、代表的なプロジェクトが**Avail**です！！
 
 ## 第2章：<br/>Availとは？〜Web3を統一する三本の矢〜
 
@@ -99,7 +109,9 @@ graph TD
 
 ### ① Avail DA: 超高速・低コストなデータの保管庫
 
+:::message
 Avail DAは、モジュラーチェーンのための**スケーラブルで信頼性の高いデータ可用性レイヤー**です。
+:::
 
 - **何がすごいの？**
     - **有効性証明 (Validity Proofs):** 
@@ -107,21 +119,25 @@ Avail DAは、モジュラーチェーンのための**スケーラブルで信�
     - **データ可用性サンプリング (DAS):** 
       ライトクライアント（スマホやブラウザなど）が、ブロックデータ全体をダウンロードすることなく、ごく一部をサンプリングするだけで、データが利用可能か（改ざんされていないか）を高い信頼度で検証できます。これにより、誰もがネットワークの検証に参加でき、分散性が向上します。
     - **低コスト:** 
-      Ethereumと比較して、トランザクションコストを**90%以上**削減できる可能性があります。
+      Ethereumと比較して、トランザクションコストを**90%以上**削減できる可能性があるとされています。
 
 ### ② Avail Nexus: チェーンの壁を破壊する魔法のレイヤー
 
+:::message
 Avail Nexusは、Availエコシステム内外の様々なロールアップやブロックチェーンを繋ぎ、**シームレスな相互運用を実現する検証ハブ**です。
+:::
 
 - **何がすごいの？**
     - **チェーンアブストラクション:** 
       ユーザーや開発者は背後にあるチェーンの違いを意識することなく、まるで単一の巨大なブロックチェーンを操作しているかのような体験を得られます。もう、手動でのブリッジやネットワーク切り替えは必要なくなる点は非常に魅力的ですね！
-    - **パーミッションレスな検証ハブ:** 
+    - **パーミッションレスな検証Hub:** 
       様々なチェーンからの「この取引は正しいです」という証明を集約し、Avail DAを信頼の基点として、チェーン間の安全な通信を可能にします。
 
 ### ③ Avail Fusion: 外部資産でセキュリティを強化
 
+:::message
 Avail Fusionは、Availネットワーク全体の経済的セキュリティを強化するためのレイヤーです。
+:::
 
 - **何がすごいの？**
     - **マルチアセットステーキング:** 
@@ -141,17 +157,31 @@ https://avail-nexus-demo-five.vercel.app/
 
 | 機能 | 説明 | SDKメソッド |
 | :--- | :--- | :--- |
-| **マルチチェーンの残高一括取得** | 複数チェーンに散らばった自分の資産を足し算して一括で取得。 | `getUnifiedBalances()` |
-| **スマート転送** | 自動でブリッジやスワップを行い、トークンを送金。 | `transfer()` |
-| **クロスチェーンスワップ** | 「PolygonのMATICを、ArbitrumのUSDCに交換したい」といった複雑な取引をワンクリックで実現！ | `swap()` |
-| **クロスチェーン実行** | **あるチェーンから、別のチェーン上のスマートコントラクト関数を直接呼び出す！(任意の処理を呼び出すことが可能)** | `execute()` |
+| **マルチチェーンに跨って資産の残高一括取得する機能** | 複数チェーンに散らばった自分の資産を足し算して一括で取得。 | `getUnifiedBalances()` |
+| **スマート転送機能** | 自動でブリッジやスワップを行い、トークンを送金。 | `transfer()` |
+| **クロスチェーンスワップ機能** | 「PolygonのMATICを、ArbitrumのUSDCに交換したい」といった複雑な取引をワンクリックで実現！ | `swap()` |
+| **クロスチェーン実行機能** | **あるチェーンから、別のチェーン上のスマートコントラクト関数を直接呼び出す！(任意の処理を呼び出すことが可能)** | `execute()` |
 
-これにより、ユーザーは以下のようなこれまで考えられなかったほど快適なUXを手に入れます。  
-※ 厳密にいえば技術的には今までも可能でしたが実装が複雑になったりして大変でした。
+これにより、ユーザーは以下のようなこれまで考えられなかったほど快適なUXを手に入れることができます！ 
+
+:::message
+厳密にいえば技術的には今までも可能でしたが実装が複雑になったりして大変でした。
+:::
 
 - **WalletConnectで接続するだけ**で、自分の全資産をDAppが自動で認識。
 - あるゲーム内アイテムを、**チェーンを意識することなく**別のゲームのキャラクターに送る。
 - Polygonチェーン上のDeFiで得た利益（USDC）を、**ワンクリックで**Optimismチェーン上のNFTマーケットプレイスでの支払いに使う。
+
+クロスチェーンに関しては **CCTP** や **CCIP**、**LayerZero**、**Hyperlane** などいくつか主要なプロジェクトがありますが、 Nexus SDKはそれらと比較しても導入が簡単でした。
+
+:::message
+導入は簡単ですが
+
+- フロントエンド側でしかSDKが使えない
+- USDC、USDT、ETH、POL、MODしか扱えない
+
+という制約があります。
+:::
 
 まさに、Web3の「めんどくさい」が解消され、誰もが直感的に使えるアプリケーションが生まれる土壌がここにあるのです。
 
@@ -159,7 +189,13 @@ https://avail-nexus-demo-five.vercel.app/
 
 百聞は一見に如かず。
 
-Next.jsを使って、Nexus SDKの「統一残高取得」機能を実装してみましょう！
+Next.jsとNexus SDKでサンプルアプリケーションを立ち上げて実際に触れてみましょう！
+
+サンプルコードは以下に格納されています！  
+※ ベースとなっているはAvailの公式チームがGitHubで公開しているものです。
+※ テストネットで動くように設定を変更しているのとソースコードにコメントを追加しています
+
+https://github.com/mashharuki/nexus-sample-app
 
 ### ※前提※
 
@@ -175,28 +211,34 @@ Next.jsを使って、Nexus SDKの「統一残高取得」機能を実装して�
 - **pnpm**: `npm install -g pnpm`
 - **MetaMask**: ブラウザ拡張のWeb3ウォレット
 
-#### 2. Next.jsプロジェクトの作成
+#### 2. GitHubリポジトリをクローンする
+
 ```bash
-# Next.jsプロジェクトを作成
-pnpm create next-app@latest my-nexus-app --typescript --eslint --tailwind --app --src-dir --use-pnpm
+git clone https://github.com/mashharuki/nexus-sample-app.git
 
 # ディレクトリへ移動
-cd my-nexus-app
+cd headless-sample-app
 ```
 
 #### 3. 必要なパッケージのインストール
+
 Nexus SDKと、ウォレット接続を簡単にするためのライブラリ（`wagmi`, `connectkit`）をインストールします。
+
 ```bash
-pnpm add @avail-project/nexus-core @avail-project/nexus-widgets wagmi viem @tanstack/react-query connectkit
+pnpm i
 ```
  
-> **注釈:** `wagmi`や`connectkit`は、React環境でウォレット接続やチェーンとの対話を驚くほど簡単にしてくれる、現代Web3開発の必須ツールです。
+> **注釈:** `wagmi`や`connectkit`は、React環境でウォレット接続やチェーンとの対話を驚くほど簡単にしてくれる、Web3開発における強力なライブラリです。
 
 #### 4. 環境変数の設定
-プロジェクトのルートに`.env.local`ファイルを作成し、WalletConnectのプロジェクトIDを設定します。IDは[WalletConnect Cloud](https://cloud.walletconnect.com/)で取得してください。
+
+プロジェクトのルートに`.env.local`ファイルを作成し、WalletConnectのプロジェクトIDを設定します。
+
+IDは[WalletConnect Cloud](https://cloud.walletconnect.com/)で取得してください。
 
 ```.env.local
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="YOUR_WALLETCONNECT_PROJECT_ID"
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_ENABLE_TESTNET=
 ```
 
 ### 実装ステップ
@@ -205,213 +247,108 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="YOUR_WALLETCONNECT_PROJECT_ID"
 
 DApp全体でウォレット情報やNexus SDKの状態を共有できるように、プロバイダーを設定します。
 
-まず、`src/app/providers.tsx` を作成します。
+今回は **Nexus SDK** と **Wagmi** 用のプロバイダーが設定されています。
 
-```typescript:src/app/providers.tsx
-"use client";
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/provider/NexusProvider.tsx
 
-import React from "react";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia, optimism, arbitrum, polygon, base, scroll } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { NexusProvider } from "@avail-project/nexus-widgets";
-
-const chains = [mainnet, sepolia, optimism, arbitrum, polygon, base, scroll];
-
-const config = createConfig(
-  getDefaultConfig({
-    appName: "My Avail Nexus App",
-    chains,
-    transports: {
-      [mainnet.id]: http(),
-      [sepolia.id]: http(),
-      [optimism.id]: http(),
-      [arbitrum.id]: http(),
-      [polygon.id]: http(),
-      [base.id]: http(),
-      [scroll.id]: http(),
-    },
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-  })
-);
-
-const queryClient = new QueryClient();
-
-export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider>
-          {/* NexusProviderでラップし、テストネットを指定 */}
-          <NexusProvider config={{ network: 'testnet' }}>
-            {children}
-          </NexusProvider>
-        </ConnectKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}
-```
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/provider/Web3Provider.tsx
 
 次に、`src/app/layout.tsx`でアプリケーション全体を`Providers`でラップします。
 
-```typescript:src/app/layout.tsx
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Providers } from "./providers"; // インポート
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/app/layout.tsx
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Avail Nexus SDK Tutorial",
-  description: "A demo of Avail Nexus SDK",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="ja">
-      <body className={inter.className}>
-        <Providers>{children}</Providers> {/* ラップする */}
-      </body>
-    </html>
-  );
-}
-```
+これで準備OKです！！
 
 #### STEP 2: UIとロジックの実装
 
-`src/app/page.tsx`を編集して、ウォレット接続ボタンと残高表示エリアを作成します。
+**Nexus SDK** の機能の一つである `getUnifiedBalances()` は以下のように呼び出します！
 
-```typescript:src/app/page.tsx
-"use client";
+これでマルチチェーン上のデジタルアセットの残高をまとめて取得してきてくれます！！  
 
-import { ConnectKitButton } from "connectkit";
-import { useAccount } from "wagmi";
-import { NexusSDK } from "@avail-project/nexus-core";
-import { useState, useEffect } from "react";
+これは便利ですね！
 
-export default function HomePage() {
-  const { address, isConnected, connector } = useAccount();
-  const [sdk, setSdk] = useState<NexusSDK | null>(null);
-  const [unifiedBalances, setUnifiedBalances] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/components/unified-balance.tsx#L22-L39
 
-  // ウォレット接続時にSDKを初期化
-  useEffect(() => {
-    if (isConnected && connector) {
-      const initializeNexus = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          const newSdk = new NexusSDK({ network: 'testnet' });
-          const provider = await connector.getProvider();
-          await newSdk.initialize(provider);
-          setSdk(newSdk);
-        } catch (e: any) {
-          console.error("SDK initialization failed:", e);
-          setError(`SDK初期化エラー: ${e.message}`);
-        } finally {
-          setLoading(false);
-        }
-      };
-      initializeNexus();
-    } else {
-      setSdk(null);
-      setUnifiedBalances(null);
-    }
-  }, [isConnected, connector]);
+ブリッジ機能は以下のように呼び出します！
 
-  // 統一残高を取得する関数
-  const fetchBalances = async () => {
-    if (!sdk || !address) {
-      setError("SDK未初期化、またはウォレット未接続です。");
-      return;
-    }
-    try {
-      setLoading(true);
-      setError(null);
-      const balances = await sdk.getUnifiedBalances(address);
-      setUnifiedBalances(balances);
-    } catch (e: any) {
-      console.error("Failed to fetch balances:", e);
-      setError(`残高取得エラー: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/hooks/useBridgeTransaction.ts#L77-L80
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-gray-50">
-      <h1 className="text-4xl font-extrabold mb-8 text-gray-800">🚀 Avail Nexus SDK Demo 🚀</h1>
-      <ConnectKitButton />
+一番の目玉機能である Bridge & Executeについては以下のように呼び出します！
 
-      {isConnected && (
-        <div className="mt-8 p-8 bg-white rounded-xl shadow-lg w-full max-w-2xl text-center">
-          <p className="text-lg font-medium text-gray-700 mb-6">
-            SDK初期化状態: {sdk ? "✅ 完了" : "⏳ 待機中..."}
-          </p>
-          <button
-            onClick={fetchBalances}
-            disabled={!sdk || loading}
-            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-full shadow-xl hover:scale-105 transition duration-300 disabled:opacity-50"
-          >
-            {loading ? "取得中..." : "💰 統一残高を取得"}
-          </button>
+操作対象である資産のapproveメソッドについてもSDK側で呼び出してくれるような仕組みになってます！
 
-          {error && <p className="text-red-500 mt-6">{error}</p>}
+このおかげでbridgeした先のコントラクトでそのままERC20規格のトークン(現状ではUSDCとUSDTのみ)を操作することができます！
 
-          {unifiedBalances && (
-            <div className="mt-10 p-6 bg-gray-100 rounded-lg shadow-inner w-full text-left">
-              <h2 className="text-2xl font-bold text-gray-800 mb-5">あなたの全資産 ✨</h2>
-              {Object.keys(unifiedBalances).length === 0 ? (
-                <p>表示可能なトークンはありません。</p>
-              ) : (
-                Object.entries(unifiedBalances).map(([token, data]: [string, any]) => (
-                  <div key={token} className="mb-6 pb-4 border-b last:border-b-0">
-                    <h3 className="text-xl font-semibold text-purple-700 mb-2">{token}</h3>
-                    <p className="ml-4 text-lg"><b>合計:</b> {data.totalFormatted} {token}</p>
-                    <ul className="ml-8 mt-2 list-disc list-inside text-gray-600">
-                      {data.breakdown.map((item: any, index: number) => (
-                        <li key={index}>
-                          {item.chainName}: {item.formattedBalance} {token}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+https://github.com/mashharuki/nexus-sample-app/blob/main/headless-sample-app/src/hooks/useBridgeExecuteTransaction.ts
+
+### 動かしてみよう！
+
+#### 1. 開発サーバーを起動する
+
+以下のコマンドを実行します
+
+```bash
+pnpm dev
 ```
 
-### 実行してみよう！
+#### 2. アプリにアクセスする
 
-1.  ターミナルで開発サーバーを起動します。
+ブラウザで `http://localhost:3000` を開いてみましょう！
 
-      ```bash
-      pnpm dev
-      ```
-2.  ブラウザで `http://localhost:3000` を開きます。
-3.  ウォレットを接続し、ネットワークをSepoliaなどのテストネットに切り替えます（テストネットのトークンは各チェーンのFaucetから入手してください）。
-4.  「💰 統一残高を取得」ボタンをクリック！
+以下のような画面に遷移するはずです！！
 
-どうでしょう？
+![](/images/avail-nexus_1/1.png)
 
-Sepoliaチェーン、Optimism Sepoliaチェーン、Arbitrum Sepoliaチェーンなどに分散しているあなたのテスト用ETHやUSDCが、一つのリストとして表示されたはずです。
+ウォレットを接続してみるとマルチチェーンにまたがる資産が丸っと表示されます！！  
 
-これが「チェーンアブストラクション」の第一歩です！
+![](/images/avail-nexus_1/2.png)
+
+:::message
+全部テストネットの資産です。  
+※ メインネットだったら大金持ち...笑
+:::
+
+
+#### 3. Nexus SDKの機能を試してみよう
+
+では早速 Nexus SDKの機能を使ってブリッジを行ってみましょう！！
+
+`bridge`タブに切り替えて違うブロックチェーンに自分のデジタルアセットを送ってみましょう！！
+
+![](/images/avail-nexus_1/3.png)
+
+- 送金先のチェーン
+- 送金するアセット
+- 送金額
+
+を指定します！
+
+![](/images/avail-nexus_1/4.png)
+
+するとトランザクションへの署名が何回か求められるので全て承認します！
+
+![](/images/avail-nexus_1/5.png)
+
+うまく処理されたらブリッジが始まるはずです！！
+
+![](/images/avail-nexus_1/6.png)
+
+時間はかかりますが、ちゃんとブリッジされるはずです！
+
+Sepolia側のトランザクション
+
+https://sepolia.etherscan.io/tx/0x5e21ff4977a27dc044997cd68cc9321d557995e851d0ce9ed27751e86f8c2a91
+
+Arbitrum Sepolia側のトランザクション
+
+https://sepolia.arbiscan.io/tx/0xce03b963c20f9b14ca45642e2949f53a8799c815cdabab2c7dc520cbe90deb9b
+
+ちゃんとブリッジされてますね！！
+
+素晴らしい！！
+
+マルチチェーン上の残高取得と操作が一つのSDKで完結していること
+そして設定が他のクロスチェーン系のSDKよりも簡単なことは特筆すべき点かと思います！！
 
 ## まとめ：<br/>Availが拓く、真に統一されたWeb3の未来
 
