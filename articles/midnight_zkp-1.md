@@ -1,5 +1,5 @@
 ---
-title: "プライバシーの未来を切り拓く！Cardanoのパートナーチェーン「Midnight」とは？"
+title: "プライバシーの未来を切り拓く！Cardanoのパートナーチェーン「midnight」とは？"
 emoji: "🧙‍♀️"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["blockchain", "cardano", "privacy", "zeroknowledge", "typescript"]
