@@ -83,7 +83,7 @@ Compactにおけるデータ管理の核心は、データのプライバシー�
 ```mermaid
 graph TD
     subgraph "ユーザーのオフチェーン環境"
-        A[🔏 private: プライベート状態<br>（例: 個人のカウンター値）] --> B;
+        A[🔏 private: プライベート状態<br>（例: 個人のCounter値）] --> B;
     end
     subgraph "トランザクション入力"
         B[🤝 witness: 証明<br>（例: 「私の前の値は5でした」）] --> C{回路の実行};
@@ -112,7 +112,7 @@ graph TD
     - `private` な状態を更新する際の根拠として使われます。
     - `witness` キーワードで定義されます。
 
-### 基本的な文法とカウンタースマートコントラクトの例
+### 基本的な文法とCounterスマートコントラクトの例
 
 これらの概念を、簡単なCounterスマートコントラクトの例で見ていきましょう。
 
@@ -121,53 +121,29 @@ graph TD
 
 このコントラクトには、
 
-- **公開カウンター（`publicRound`）**
-- **プライベートカウンター（`privateCount`）**
+- 公開台帳に保存されるステート変数
+- 上記ステート変数を加算するメソッド
 
-が存在します。
+が含まれます。
 
 ```typescript:counter.compact
-pragma language_version >= 0.25.0;
+pragma language_version >= 0.16 && <= 0.25;
 import CompactStandardLibrary;
 
-// 各ユーザーがオフチェーンで管理するプライベートな状態
-let privateCount: private Field;
+// public state (公開台帳に保存される状態)
+export ledger round: Counter;
 
-// オンチェーンで公開されるパブリックな状態
-export ledger publicRound: Counter;
-
-// プライベートカウンターをインクリメントし、
-// その事実をパブリックカウンターに記録する回路
-export circuit increment(
-  // トランザクションを送信するユーザーが「自分の前の値はこれだった」と証明するための入力
-  previousPrivateCount: witness Field
-) {
-  // --- 検証フェーズ ---
-  // ユーザーが提供した `previousPrivateCount` が、
-  // 自分の知っている `privateCount` の実際の値と一致するかを検証する。
-  assert(privateCount === previousPrivateCount);
-
-  // --- 状態更新フェーズ ---
-  // 検証が成功した場合のみ、状態を更新する
-
-  // 1. プライベートな状態を更新する (値は秘匿されたまま)
-  privateCount = privateCount + 1;
-
-  // 2. パブリックな状態を更新する (インクリメントされたという事実を記録)
-  publicRound.increment(1);
-}
-
-// 初期状態を設定するための特別な回路
-export circuit initialize(initialPrivateCount: witness Field) {
-  privateCount = initialPrivateCount;
+// transition function changing public state (公開状態を変更する関数)
+export circuit increment(): [] {
+    round.increment(1);
 }
 ```
 
+- **`ledger`**:  
+  ブロックチェーン上で公開されるステート変数です。
 - **`circuit`**:   
   トランザクションによって呼び出される関数（ステート遷移関数）です。  
   この中で状態の検証と更新が行われます。
-- **`assert(...)`**:   
-  カッコ内の条件が真であることを証明します。もし条件が偽であれば、トランザクションは失敗します。これは、ゼロ知識証明における中核的な役割を果たし、「ユーザーが正しい `previousPrivateCount` を知っている」ことを、その値を公開することなく検証します。
 
 <br/>
 
@@ -257,9 +233,27 @@ docker run -p 6300:6300 midnightnetwork/proof-server -- 'midnight-proof-server -
 ターミナルにログが流れ始めれば成功です。  
 このターミナルは起動したままにしておいてください。
 
+念の為以下のコマンドでも稼働確認が可能です！
+
+```bash
+curl -X GET "http://localhost:6300"
+```
+
+以下のように表示されればOKです！
+
+```bash
+We're alive 🎉!
+```
+
 ### Step 4: サンプルリポジトリの準備
 
 最後に、この記事で解説するコードが含まれたリポジトリを準備します。
+
+今回は以下のリポジトリを使用します。
+
+https://github.com/mashharuki/midnight-sample
+
+必要に応じてリポジトリを自分のアカウントにクローンしてきてください。
 
 ```bash
 # リポジトリをクローン(事前に自分のアカウントにフォークしておくこと！)
@@ -284,35 +278,19 @@ yarn
 
 ### コードの解説
 
-`pkgs/contract/src/counter.compact` に、先ほど解説したカウンタースマートコントラクトを記述します。（サンプルリポジトリには、よりシンプルなコードが含まれている場合がありますが、ここでは学習のために `private` な状態を持つこちらのコードを使用します）
+`pkgs/contract/src/counter.compact` に、先ほど解説したCounterスマートコントラクトを記述します。
+
 
 ```typescript:pkgs/contract/src/counter.compact
-pragma language_version >= 0.25.0;
+pragma language_version >= 0.16 && <= 0.25;
 import CompactStandardLibrary;
 
-// 各ユーザーがオフチェーンで管理するプライベートな状態
-let privateCount: private Field;
+// public state (公開台帳に保存される状態)
+export ledger round: Counter;
 
-// オンチェーンで公開されるパブリックな状態
-export ledger publicRound: Counter;
-
-// プライベートカウンターをインクリメントし、
-// その事実をパブリックカウンターに記録する回路
-export circuit increment(
-  // 「私の前の値はこれだった」と証明するための入力
-  previousPrivateCount: witness Field
-) {
-  // 検証：ユーザーが提供した`previousPrivateCount`が実際の`privateCount`と一致するか
-  assert(privateCount === previousPrivateCount);
-
-  // 状態更新
-  privateCount = privateCount + 1; // プライベートな状態を更新
-  publicRound.increment(1);      // パブリックな状態を更新
-}
-
-// 初期状態を設定するための回路
-export circuit initialize(initialPrivateCount: witness Field) {
-  privateCount = initialPrivateCount;
+// transition function changing public state (公開状態を変更する関数)
+export circuit increment(): [] {
+    round.increment(1);
 }
 ```
 
@@ -324,7 +302,19 @@ export circuit initialize(initialPrivateCount: witness Field) {
 yarn contract compact
 ```
 
-成功すると、`Fetching public parameters...` のようなログが表示されます。
+実際には以下のようなコマンドを実行しています。
+
+```bash
+compact compile ./src/counter.compact ./src/managed/counter
+```
+
+成功すると、以下のようなログが表示されます。
+
+```bash
+Fetching public parameters for k=10 [====================] 192.38 KiB / 192.38 KiB
+  circuit "increment" (k=10, rows=29)  
+Overall progress [====================] 1/1   
+```
 
 ### ユニットテストの実装
 
@@ -335,56 +325,55 @@ Compactでは、コントラクトのロジックをオフチェーンでシミ�
 テストには `CounterSimulator` というヘルパークラス（内部でCompactのテスト用ライブラリを使用）を利用します。
 
 ```typescript:pkgs/contract/src/test/counter.test.ts
+import { CounterSimulator } from "./counter-simulator.js";
+import {
+  NetworkId,
+  setNetworkId
+} from "@midnight-ntwrk/midnight-js-network-id";
 import { describe, it, expect } from "vitest";
-import { CounterSimulator } from "./counter-simulator.js"; // これは架空のシミュレーター
 
-describe("Counter Smart Contract with Private State", () => {
-  it("should initialize private and public states correctly", () => {
-    // シミュレーターを初期化
+setNetworkId(NetworkId.Undeployed);
+
+/**
+ * Counterコントラクト用のユニットテストコード
+ */
+describe("Counter smart contract", () => {
+  it("generates initial ledger state deterministically", () => {
+    // シミュレーター型インスタンスを生成
+    const simulator0 = new CounterSimulator();
+    const simulator1 = new CounterSimulator();
+    expect(simulator0.getLedger()).toEqual(simulator1.getLedger());
+  });
+
+  it("properly initializes ledger state and private state", () => {
     const simulator = new CounterSimulator();
-
-    // `initialize` 回路を実行してプライベートカウンターを `42` に設定
-    // .prove()メソッドで回路を呼び出し、witnessデータを渡す
-    simulator.prove("initialize", { initialPrivateCount: 42n });
-
-    // プライベートな状態が正しく設定されたか確認
-    expect(simulator.getPrivateState().privateCount).toEqual(42n);
-    // パブリックな状態はまだ変わらない
-    expect(simulator.getLedger().publicRound).toEqual(0n);
+    // 初期状態の台帳のステートを取得
+    const initialLedgerState = simulator.getLedger();
+    // 0になるはず
+    expect(initialLedgerState.round).toEqual(0n);
+    // プライベートのステートも0になるはず
+    const initialPrivateState = simulator.getPrivateState();
+    expect(initialPrivateState).toEqual({ privateCounter: 0 });
   });
 
-  it("should increment both private and public counters correctly", () => {
-    // プライベートカウンターが `42` の状態でシミュレーターを開始
-    const simulator = new CounterSimulator({ privateCount: 42n });
-
-    // `increment` 回路を実行。正しい `previousPrivateCount` を `witness` として渡す
-    simulator.prove("increment", { previousPrivateCount: 42n });
-
-    // プライベートカウンターがインクリメントされたか確認
-    expect(simulator.getPrivateState().privateCount).toEqual(43n);
-    // パブリックカウンターもインクリメントされたか確認
-    expect(simulator.getLedger().publicRound).toEqual(1n);
-  });
-
-  it("should fail to increment with incorrect witness", () => {
-    // プライベートカウンターが `42` の状態でシミュレーターを開始
-    const simulator = new CounterSimulator({ privateCount: 42n });
-
-    // `assert` が失敗するように、間違った `previousPrivateCount` を渡す
-    const execution = () => {
-      simulator.prove("increment", { previousPrivateCount: 99n }); // 99nは間違い
-    };
-
-    // `assert`の失敗により、トランザクションがエラーになることを確認
-    expect(execution).toThrow("Assertion failed");
+  it("increments the counter correctly", () => {
+    const simulator = new CounterSimulator();
+    // incrementメソッドを呼び出す
+    const nextLedgerState = simulator.increment();
+    // 1加算されているはず
+    expect(nextLedgerState.round).toEqual(1n);
+    // プライベートステートの値は変わっていないはず
+    const nextPrivateState = simulator.getPrivateState();
+    expect(nextPrivateState).toEqual({ privateCounter: 0 });
   });
 });
 ```
 
 このテストコードは、以下の3つのシナリオを検証しています。
-1. `initialize` 回路でプライベート状態が正しく設定されること。
-2. 正しい `witness` を使えば、プライベートとパブリック両方の状態が正しく更新されること。
-3. 間違った `witness` を使うと、`assert` が機能してトランザクションが失敗すること。
+
+1. コントラクトが正しく初期化されること
+2. ledgerの初期値が0であること
+3. incrementメソッドが正しく呼び出されること
 
 ### テストの実行
 
@@ -396,21 +385,22 @@ yarn contract test
 
 すべてのテストが成功すれば、以下のような出力が表示されます。
 
-```
- RUN  v4.0.8 /path/to/your/project/pkgs/contract
+```bash
+RUN  v4.0.8 /workspaces/midnight-sample/my-mn-app/pkgs/contract
 
- ✓ test/counter.test.ts (3 tests)
-   ✓ Counter Smart Contract with Private State
-     ✓ should initialize private and public states correctly
-     ✓ should increment both private and public counters correctly
-     ✓ should fail to increment with incorrect witness
+ ✓ test/counter.test.ts (3 tests) 44ms
+   ✓ Counter smart contract (3)
+     ✓ generates initial ledger state deterministically 36ms
+     ✓ properly initializes ledger state and private state 3ms
+     ✓ increments the counter correctly 4ms
 
  Test Files  1 passed (1)
       Tests  3 passed (3)
-   Start at  ...
-   Duration  ...
+   Start at  08:27:47
+   Duration  421ms (transform 95ms, setup 0ms, collect 233ms, tests 44ms, environment 0ms, prepare 13ms)
 
-Done in ...s.
+JUNIT report written to /workspaces/midnight-sample/my-mn-app/pkgs/contract/reports/report.xml
+Done in 1.34s.
 ```
 
 これで、コントラクトのロジックが意図通りに動作することが確認できました。
@@ -433,13 +423,19 @@ Done in ...s.
 yarn contract build
 ```
 
+実際には以下のようなコマンドが実行されます。
+
+```bash
+rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/counter.compact ./dist
+```
+
 このステップにより、`cli`パッケージから`contract`パッケージの回路（`increment`など）を型安全に呼び出すことができるようになります！
 
 ### 環境変数の設定
 
 Testnetへのデプロイには、トランザクションに署名するためのウォレットの秘密鍵が必要です。
 
-`pkgs/cli` ディレクトリにある `.env.example` ファイルをコピーして `.env` ファイルを作成し、Lace Walletの秘密鍵を設定します。
+`pkgs/cli` ディレクトリにある `.env.example` ファイルをコピーして `.env` ファイルを作成し、Lace Walletのシードを設定します。
 
 ```bash
 cp pkgs/cli/.env.example pkgs/cli/.env
@@ -448,20 +444,303 @@ cp pkgs/cli/.env.example pkgs/cli/.env
 そして、作成した `pkgs/cli/.env` ファイルを編集します。
 
 ```:pkgs/cli/.env
-
-# デプロイするコントラクトアドレス（デプロイ後に設定）
-CONTRACT_ADDRESS=""
+# testnetをしている
+NETWORK_ENV_VAR=testnet
+# ここにLaceWalletからエクスポートしたシードを貼り付ける
+SEED_ENV_VAR=
+INITIAL_COUNTER_ENV_VAR=
+CACHE_FILE_ENV_VAR=
+# コントラクトデプロイ後に設定
+CONTRACT_ADDRESS=
 ```
 
 :::message
-**秘密鍵の取り扱いには最大限の注意を払ってください。** 
+**シードの取り扱いには最大限の注意を払ってください。** 
 
-このファイルがGitHubなどに公開されないよう、`.gitignore`に含まれていることを必ず確認してください。
+このファイルがGitHubなどに公開されないように`.gitignore`に含まれていることを必ず確認してください。
 :::
+
+### CLI用ユニットテストコードの解説
+
+CLI用にもユニットテストコードを用意しています。
+
+```ts
+// This file is part of midnightntwrk/example-counter.
+// Copyright (C) 2025 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// You may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { type Resource } from '@midnight-ntwrk/wallet';
+import { type Wallet } from '@midnight-ntwrk/wallet-api';
+import path from 'path';
+import * as api from '../api';
+import { type CounterProviders } from '../utils/common-types';
+import { currentDir } from '../config';
+import { createLogger } from '../utils/logger-utils';
+import { TestEnvironment } from './commons';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
+const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
+const logger = await createLogger(logDir);
+
+describe('API', () => {
+  let testEnvironment: TestEnvironment;
+  let wallet: Wallet & Resource;
+  let providers: CounterProviders;
+
+  /**
+   * 全ユニットテストコード実行前に行う共通処理
+   * ウォレットやプロバイダー、環境変数の設定、ロギングの設定を行う
+   */
+  beforeAll(
+    async () => {
+      api.setLogger(logger);
+      testEnvironment = new TestEnvironment(logger);
+      const testConfiguration = await testEnvironment.start();
+      wallet = await testEnvironment.getWallet();
+      providers = await api.configureProviders(wallet, testConfiguration.dappConfig);
+    },
+    1000 * 60 * 45,
+  );
+
+  afterAll(async () => {
+    await testEnvironment.saveWalletCache();
+    await testEnvironment.shutdown();
+  });
+
+  it('should deploy the contract and increment the counter [@slow]', async () => {
+    // Counterコントラクトをデプロイする
+    const counterContract = await api.deploy(providers, { privateCounter: 0 });
+    expect(counterContract).not.toBeNull();
+    // デプロイ後のCounterコントラクトの値を確認する
+    const counter = await api.displayCounterValue(providers, counterContract);
+    expect(counter.counterValue).toEqual(BigInt(0));
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // incrementメソッドを呼び出す
+    const response = await api.increment(counterContract);
+    expect(response.txHash).toMatch(/[0-9a-f]{64}/);
+    expect(response.blockHeight).toBeGreaterThan(BigInt(0));
+    // 実行後に1加算されていれば正常！
+    const counterAfter = await api.displayCounterValue(providers, counterContract);
+    expect(counterAfter.counterValue).toEqual(BigInt(1));
+    expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
+  });
+});
+```
+
+このユニットテストコードをローカルブロックチェーンとテストネットブロックチェーン上それぞれで実行してみます！
+
+以下のコマンドを実行してみてください！
+
+#### ローカルでのユニットテストコード実施
+
+```bash
+yarn cli test-api
+```
+
+以下のようになればOK!
+
+```bash
+Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  08:41:12
+   Duration  200.97s (transform 180ms, setup 72ms, collect 1.11s, tests 199.62s, environment 0ms, prepare 10ms)
+```
+
+#### テストネットでのユニットテストコード実施
+
+```bash
+yarn cli test-against-testnet
+```
+
+以下のようになればOK!
+
+```bash
+✓ src/test/counter.api.test.ts (1 test) 151857ms
+  ✓ API (1)
+    ✓ should deploy the contract and increment the counter [@slow]  125059ms
+
+Test Files  1 passed (1)
+    Tests  1 passed (1)
+  Start at  08:47:54
+  Duration  153.65s (transform 205ms, setup 93ms, collect 1.56s, tests 151.86s, environment 0ms, prepare 8ms)
+```
 
 ### デプロイスクリプトの解説
 
 `pkgs/cli/scripts/deploy.ts` は、コントラクトをTestnetにデプロイするためのスクリプトです。
+
+```ts
+import type { Logger } from 'pino';
+import { createLogger } from '../src/utils/logger-utils.js';
+import {
+	StandaloneConfig,
+	TestnetLocalConfig,
+	TestnetRemoteConfig,
+	type Config,
+} from '../src/config.js';
+import * as api from '../src/api.js';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+const {
+    NETWORK_ENV_VAR,
+    SEED_ENV_VAR,
+    INITIAL_COUNTER_ENV_VAR,
+    CACHE_FILE_ENV_VAR,
+} = process.env;
+
+/**
+ * CIやスクリプト実行向けの非対話的なデプロイヘルパー。
+ * 対象ネットワークと再利用するウォレットシードを環境変数で指定し、手動入力なしに安全に再デプロイできる。
+ */
+
+type SupportedNetwork = 'standalone' | 'testnet-local' | 'testnet' | 'testnet-remote';
+
+const resolveNetwork = (value: string | undefined): SupportedNetwork => {
+	const normalized = (value ?? 'testnet').toLowerCase();
+	if (normalized === 'testnet') {
+		return 'testnet';
+	}
+	switch (normalized) {
+		case 'testnet-remote':
+		case 'standalone':
+		case 'testnet-local':
+			return normalized;
+		default:
+			throw new Error(`Unsupported network '${value}'.`);
+	}
+};
+
+const buildConfig = (network: SupportedNetwork): Config => {
+	switch (network) {
+		case 'standalone':
+			return new StandaloneConfig();
+		case 'testnet-local':
+			return new TestnetLocalConfig();
+		case 'testnet':
+		case 'testnet-remote':
+		default:
+			return new TestnetRemoteConfig();
+	}
+};
+
+const ensureSeed = (seed: string | undefined): string => {
+	if (seed === undefined || seed.trim() === '') {
+		throw new Error(`Wallet seed is required. Set ${SEED_ENV_VAR}.`);
+	}
+	return seed.trim();
+};
+
+const parseInitialCounter = (value: string | undefined): number => {
+	if (value === undefined || value.trim() === '') {
+		return 0;
+	}
+	const parsed = Number(value);
+	if (!Number.isSafeInteger(parsed) || parsed < 0) {
+		throw new Error(`Initial counter must be a non-negative safe integer. Received '${value}'.`);
+	}
+	return parsed;
+};
+
+const defaultCacheName = (seed: string, network: SupportedNetwork): string => {
+	const prefix = seed.substring(0, 8);
+	return `${prefix}-${network}.state`;
+};
+
+// Midnight系リソースはbest-effortなcloseメソッドを持つことが多いため、失敗は握り潰して再実行可能性を保つ。
+const closeIfPossible = async (resource: unknown, label: string): Promise<void> => {
+	if (resource !== null && typeof resource === 'object') {
+		const maybeClosable = resource as { close?: () => unknown };
+		if (typeof maybeClosable.close === 'function') {
+			try {
+				await Promise.resolve(maybeClosable.close());
+			} catch (error) {
+				if (logger !== undefined) {
+					if (error instanceof Error) {
+						logger.warn(`Failed to close ${label}: ${error.message}`);
+						logger.debug(error.stack ?? '');
+					} else {
+						logger.warn(`Failed to close ${label}: ${String(error)}`);
+					}
+				}
+			}
+		}
+	}
+};
+
+let logger: Logger | undefined;
+
+/**
+ * コントラクトデプロイ用のスクリプト
+ */
+const main = async () => {
+    // ネットワーク情報を取得する
+	const network = resolveNetwork(NETWORK_ENV_VAR);
+	const seed = ensureSeed(SEED_ENV_VAR);
+	const initialCounter = parseInitialCounter(INITIAL_COUNTER_ENV_VAR);
+	const cacheFileName = CACHE_FILE_ENV_VAR ?? defaultCacheName(seed, network);
+    // 設定ファイルの読み込み
+	const config = buildConfig(network);
+    // ロガーの設定
+	logger = await createLogger(config.logDir);
+	api.setLogger(logger);
+
+	logger.info(`Deploying counter contract to '${network}' network.`);
+	logger.info(`Using cache file '${cacheFileName}'.`);
+    
+	let wallet: Awaited<ReturnType<typeof api.buildWalletAndWaitForFunds>> | undefined;
+	
+    try {
+        // シードからウォレットを作成
+		wallet = await api.buildWalletAndWaitForFunds(config, seed, cacheFileName);
+        // プロバイダーインスタンスを生成
+		const providers = await api.configureProviders(wallet, config);
+        // Counterコントラクトをデプロイする
+		const counterContract = await api.deploy(providers, { privateCounter: initialCounter });
+        // デプロイしたトランザクション情報を出力する
+		const deployTx = counterContract.deployTxData.public;
+		logger.info(`Deployment transaction: ${deployTx.txId}`);
+		logger.info(`Contract address: ${deployTx.contractAddress}`);
+		console.log(`Counter contract deployed at: ${deployTx.contractAddress}`);
+		await api.saveState(wallet, cacheFileName);
+		await closeIfPossible(providers.privateStateProvider, 'private state provider');
+	} finally {
+		if (wallet !== undefined) {
+			await closeIfPossible(wallet, 'wallet');
+		}
+	}
+};
+
+/**
+ * メインメソッド
+ */
+await main().catch((error) => {
+	if (logger !== undefined) {
+		if (error instanceof Error) {
+			logger.error(`Deployment failed: ${error.message}`);
+			logger.debug(error.stack ?? '');
+		} else {
+			logger.error(`Deployment failed: ${String(error)}`);
+		}
+	} else {
+		console.error(error);
+	}
+	process.exitCode = 1;
+});
+```
 
 `@midnight-ntwrk/midnight-sdk` などのライブラリを使い、以下のような処理を行っています。
 
@@ -481,7 +760,13 @@ yarn cli deploy
 成功すると、デプロイされたコントラクトのアドレスがターミナルに出力されます。
 
 ```bash
-
+[12:16:24.603] INFO (39506): Deploying counter contract...
+[12:17:27.488] INFO (39506): Deployed contract at address: 020050e6bdae4c9e65023a252a6aba74323c1d9c1ba6e520f00e84a5fc1c75b100f3
+[12:17:27.488] INFO (39506): Deployment transaction: 00000000c408a293e4e287285649623774b2be950bf0d385a20117ce79a99eb7315aa547
+[12:17:27.489] INFO (39506): Contract address: 020050e6bdae4c9e65023a252a6aba74323c1d9c1ba6e520f00e84a5fc1c75b100f3
+Counter contract deployed at: 020050e6bdae4c9e65023a252a6aba74323c1d9c1ba6e520f00e84a5fc1c75b100f3
+[12:17:27.489] INFO (39506): Not saving cache as sync cache was not defined
+Done in 90.16s.
 ```
 
 このコントラクトアドレスを、先ほど作成した `.env` ファイルの `CONTRACT_ADDRESS` に設定しておきましょう。
@@ -492,6 +777,158 @@ yarn cli deploy
 
 `pkgs/cli/scripts/increment.ts` がそのためのスクリプトです。
 
+```ts
+import type { Logger } from 'pino';
+import { createLogger } from '../src/utils/logger-utils.js';
+import {
+	StandaloneConfig,
+	TestnetLocalConfig,
+	TestnetRemoteConfig,
+	type Config,
+} from '../src/config.js';
+import * as api from '../src/api.js';
+import { assertIsContractAddress } from '@midnight-ntwrk/midnight-js-utils';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+/**
+ * 既存のカウンターコントラクトに対し、非対話的に increment を実行するヘルパー。
+ * ネットワークやウォレットシード、コントラクトアドレスは環境変数で受け取り、CI 等でもそのまま利用できる。
+ */
+
+type SupportedNetwork = 'standalone' | 'testnet-local' | 'testnet' | 'testnet-remote';
+
+const { NETWORK_ENV_VAR, SEED_ENV_VAR, CONTRACT_ADDRESS, CACHE_FILE_ENV_VAR } = process.env;
+
+const resolveNetwork = (value: string | undefined): SupportedNetwork => {
+	const normalized = (value ?? 'testnet').toLowerCase();
+	if (normalized === 'testnet') {
+		return 'testnet';
+	}
+	switch (normalized) {
+		case 'testnet-remote':
+		case 'standalone':
+		case 'testnet-local':
+			return normalized;
+		default:
+			throw new Error(`Unsupported network '${value}'.`);
+	}
+};
+
+const buildConfig = (network: SupportedNetwork): Config => {
+	switch (network) {
+		case 'standalone':
+			return new StandaloneConfig();
+		case 'testnet-local':
+			return new TestnetLocalConfig();
+		case 'testnet':
+		case 'testnet-remote':
+		default:
+			return new TestnetRemoteConfig();
+	}
+};
+
+const ensureSeed = (seed: string | undefined): string => {
+	if (seed === undefined || seed.trim() === '') {
+		throw new Error('Wallet seed is required. Set SEED_ENV_VAR.');
+	}
+	return seed.trim();
+};
+
+const ensureContractAddress = (address: string | undefined): string => {
+	if (address === undefined || address.trim() === '') {
+		throw new Error('Contract address is required. Set CONTRACT_ADDRESS.');
+	}
+	const trimmed = address.trim();
+	assertIsContractAddress(trimmed);
+	return trimmed;
+};
+
+const defaultCacheName = (seed: string, network: SupportedNetwork): string => {
+	const prefix = seed.substring(0, 8);
+	return `${prefix}-${network}.state`;
+};
+
+// Midnight系リソースはbest-effortなcloseメソッドを持つことが多いため、失敗は握り潰して再実行可能性を保つ。
+const closeIfPossible = async (resource: unknown, label: string): Promise<void> => {
+	if (resource !== null && typeof resource === 'object') {
+		const maybeClosable = resource as { close?: () => unknown };
+		if (typeof maybeClosable.close === 'function') {
+			try {
+				await Promise.resolve(maybeClosable.close());
+			} catch (error) {
+				if (logger !== undefined) {
+					if (error instanceof Error) {
+						logger.warn(`Failed to close ${label}: ${error.message}`);
+						logger.debug(error.stack ?? '');
+					} else {
+						logger.warn(`Failed to close ${label}: ${String(error)}`);
+					}
+				}
+			}
+		}
+	}
+};
+
+let logger: Logger | undefined;
+
+const main = async () => {
+	const network = resolveNetwork(NETWORK_ENV_VAR);
+	const seed = ensureSeed(SEED_ENV_VAR);
+	const contractAddress = ensureContractAddress(CONTRACT_ADDRESS);
+	const cacheFileName = CACHE_FILE_ENV_VAR ?? defaultCacheName(seed, network);
+
+	const config = buildConfig(network);
+	logger = await createLogger(config.logDir);
+	api.setLogger(logger);
+
+	logger.info(`Incrementing counter contract on '${network}' network.`);
+	logger.info(`Target contract address: ${contractAddress}`);
+	logger.info(`Using cache file '${cacheFileName}'.`);
+
+	let wallet: Awaited<ReturnType<typeof api.buildWalletAndWaitForFunds>> | undefined;
+	let providers: Awaited<ReturnType<typeof api.configureProviders>> | undefined;
+	try {
+		wallet = await api.buildWalletAndWaitForFunds(config, seed, cacheFileName);
+		providers = await api.configureProviders(wallet, config);
+        // デプロイ済みのコントラクトインスタンスを生成
+		const counterContract = await api.joinContract(providers, contractAddress);
+        // Counterコントラクトの increment メソッドを呼び出す
+		const txInfo = await api.increment(counterContract);
+		logger.info(`Increment transaction: ${txInfo.txId} (block ${txInfo.blockHeight})`);
+		console.log(`Counter incremented. txId=${txInfo.txId} block=${txInfo.blockHeight}`);
+		const { counterValue } = await api.displayCounterValue(providers, counterContract);
+		if (counterValue !== null) {
+			logger.info(`Current counter value: ${counterValue.toString()}`);
+			console.log(`Current counter value: ${counterValue.toString()}`);
+		}
+		await api.saveState(wallet, cacheFileName);
+	} finally {
+		if (providers !== undefined) {
+			await closeIfPossible(providers.privateStateProvider, 'private state provider');
+		}
+		if (wallet !== undefined) {
+			await closeIfPossible(wallet, 'wallet');
+		}
+	}
+};
+
+await main().catch((error) => {
+	if (logger !== undefined) {
+		if (error instanceof Error) {
+			logger.error(`Increment failed: ${error.message}`);
+			logger.debug(error.stack ?? '');
+		} else {
+			logger.error(`Increment failed: ${String(error)}`);
+		}
+	} else {
+		console.error(error);
+	}
+	process.exitCode = 1;
+});
+```
+
 以下のコマンドを実行します。
 
 ```bash
@@ -500,15 +937,25 @@ yarn cli increment
 
 このスクリプトは、`.env` ファイルからコントラクトアドレスを読み込み、`api.joinContract` で既存のコントラクトに接続し、`api.increment` を呼び出します。
 
-成功すると、トランザクションIDや現在のカウンターの値が出力されます。
+成功すると、トランザクションIDや現在のCounterの値が出力されます。
 
 ```bash
-
+[12:33:37.176] INFO (47085): Incrementing...
+[12:34:34.270] INFO (47085): Transaction 000000000202acbcd05e9f19e5144acc5f97953255840b8b932fc71b84520e715b7ca900 added in block 2485067
+[12:34:34.271] INFO (47085): Increment transaction: 000000000202acbcd05e9f19e5144acc5f97953255840b8b932fc71b84520e715b7ca900 (block 2485067)
+Counter incremented. txId=000000000202acbcd05e9f19e5144acc5f97953255840b8b932fc71b84520e715b7ca900 block=2485067
+[12:34:34.271] INFO (47085): Checking contract ledger state...
+[12:34:34.462] INFO (47085): Ledger state: 1
+[12:34:34.463] INFO (47085): Current counter value: 1
+[12:34:34.463] INFO (47085): Current counter value: 1
+Current counter value: 1
+[12:34:34.463] INFO (47085): Not saving cache as sync cache was not defined
+Done in 128.20s.
 ```
 
-`Current counter value: 1` と表示され、パブリックなカウンターが1つ進んだことが確認できました！
+`Current counter value: 1` と表示され、パブリックなCounterが1つ加算されたことが確認できましたね！
 
-プライベートなカウンターの値は、あなたのローカル環境でのみ更新され、外部からは見えないままです。
+ハンズオンは以上となります。
 
 ## 現状の制約と今後について
 
