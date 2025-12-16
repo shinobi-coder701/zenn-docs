@@ -12,7 +12,7 @@ published: false
 
 みなさん、こんにちは！
 
-今回紹介するAI Agentは先日開催された **AI Builders Day プレイベント**でお話しさせていただいたAI Agentと同じになります。
+今回紹介するAI Agentは先日開催された **AI Builders Day プレイベント**でお話しさせていただいたAI Agentを深く掘り下げてみた記事になります！！
 
 > **イベントページ**
 
@@ -46,26 +46,26 @@ https://github.com/mashharuki/AgentCore-Mastra-x402
 
 フロントエンドは以下のような感じです！
 
+![](/images/x402_agentcore-1/2.png)
+
 入力フォームに場所を入力すると天気情報が取得できるようになっています！
 ※ (今回はダミー値で固定)
-
-![](/images/x402_agentcore-1/2.png)
 
 **Amazon Bedrock AgentCore Runtime**上にデプロイすると動作確認のためにSandbox環境でも動かすことができるのですが、その実行画面のイメージは以下のようになります！
 
 ![](/images/x402_agentcore-1/3.png)
 
-最終的にAI AgentからMCPが呼び出されてステーブルコインによる決済が行われるようになっています(Base Sepoliaで試しています)！
+最終的にAI AgentからMCPが呼び出されてステーブルコインによる決済が行われるようになっています(テストネットである**Base Sepolia**で試しています)！
 
 ![](/images/x402_agentcore-1/4.png)
 
 ## システム構成図
 
-今回のAI Agentのシステム構成は以下の通りとなります！
-
-全てのリソースを**CDK**でデプロイできるようになっています！！
+今回のAI Agentのシステム構成はこんな感じです！
 
 ![](/images/x402_agentcore-1/1.png)
+
+全てのリソースを**CDK**でデプロイできるようになっています！！
 
 ## 技術スタック
 
@@ -73,34 +73,44 @@ https://github.com/mashharuki/AgentCore-Mastra-x402
 
 - **AWS**
   - CDK
+    - AWSリソース管理として
   - Amazon Bedrock AgentCore
     - Runtime
+      - AI Agentの実行環境として
   - ECR
+    - コンテナリポジトリとして
   - ECS
     - Fargate
+      - コンテナの実行環境として
   - Lambda
+    - MCPサーバーの実行環境として
   - ALB
+    - ECSが外部と通信できるように設置
 - **Web3**
   - x402
-  - Solidity
-  - ERC20
-  - Openzeppelin
-  - USDC
-  - Base Sepolia
+    - ステーブルコイン
+    - スマートコントラクト
+      - Solidity
+      - ERC20
+      - Openzeppelin
+      - USDC
+      - Base Sepolia
 - **AI Agent**
   - mastra
     - Next.js のサーバーコンポーネントの部分のみを利用(Honoとかの方がいいかも...)
   - MCP
+    - AI Agentと外部ツールとの接続用プロトコル
 - **フロントエンド**
   - Next.js
+    - フロントエンドフレームワーク
 
 # 実装でポイントとなった箇所
 
-ここからは重要なポイントを解説していきます！
+ここからは重要な実装ポイントを解説していきます！
 
 ## AgentCore上にデプロイするAI AgentのDockerfile
 
-まずはAI Agent用の**Dockerfileの解説から**！
+まずはAgentCore Runtimeで実行するAI Agent用の**Dockerfile**の解説から！
 
 ::::details Dockerfileの解説
 
@@ -228,9 +238,10 @@ CMD ["node", "dist/server.js"]
 
 ## Mastraの実装
 
-次にMAstraの実装の解説になります！
+次に**Mastra**の実装の解説になります！
 
 ::::details Mastraの実装の解説
+
 まずは**x402 MCPクライアント**の設定部分からみていきましょう！
 
 ```ts
@@ -254,7 +265,7 @@ export const createx402MCPClient = () => {
         // @ts-expect-error server is not a function
         log: new ConsoleLogger(),
       },
-      // ローカル開発用の場合
+      // ローカル開発用の場合は以下のコメントをアウトを外す
       // "x402-mcp-server": {
       //   command: "node",
       //   args: [`${process.cwd()}/../mcp/dist/index.js`],
@@ -468,6 +479,8 @@ export const mastra = {
 これらのエンドポイントはAmazon Bedrock AgentCore Runtimesの利用要件で定められており、これらのエンドポイントを実装しないとちゃんと呼び出すことができないようになっています。
 :::
 
+あと、`Amazon Bedrock`に加えて`Gemini`に使えるようにAPIキーの設定も追加しています。
+
 ```ts
 import dotenv from "dotenv";
 // Load environment variables from .env file
@@ -497,6 +510,7 @@ async function loadConfigFromSSM(): Promise<void> {
     return;
   }
 
+  // SSMを使えるようにクライアントインスタンスを初期化
   const ssmClient = new SSMClient({ region });
 
   // Load MCP_SERVER_URL
@@ -507,6 +521,7 @@ async function loadConfigFromSSM(): Promise<void> {
         `Loading MCP_SERVER_URL from SSM Parameter Store: ${mcpServerUrlParam}`,
       );
 
+      // MCPサーバーURLの値を取得
       const response = await ssmClient.send(
         new GetParameterCommand({
           Name: mcpServerUrlParam,
@@ -930,6 +945,7 @@ console.log("Using RESOURCE_SERVER_URL:", RESOURCE_SERVER_URL);
 console.log("Environment variables:", JSON.stringify(process.env, null, 2));
 
 // ステーブルコインを支払うウォレットインスタンスを生成
+// ※ 今後要改良ポイント
 const account = privateKeyToAccount(privateKey);
 // x402を適用させるベースエンドポイントを指定してクライアントインスタンスを生成
 const client = withPaymentInterceptor(axios.create({ baseURL }), account);
@@ -1713,7 +1729,8 @@ export class AgentCoreMastraX402Stack extends cdk.Stack {
               NODE_ENV: "production",
               AWS_REGION: this.region,
               // AgentCore Runtime Endpoint ARN (正しいエンドポイントARNを使用)
-              // CfnRuntimeEndpointから取得した正式なARN
+              // CfnRuntimeEndpointから取得した正式なARNを渡す
+              // フロントエンドからの呼び出し時に必要
               AGENTCORE_RUNTIME_ARN: agentCoreEndpoint.attrAgentRuntimeArn,
               AGENTCORE_RUNTIME_QUALIFIER: "MastraAgentRuntimeEndpoint",
             },
@@ -1827,7 +1844,7 @@ export class AgentCoreMastraX402Stack extends cdk.Stack {
 ```
 ::::
 
-長かったですが、解説は以上になります！！！
+長かったですが、実装の時にポイントになった点の解説は以上になります！！！
 
 # 動かし方
 
@@ -1847,7 +1864,7 @@ git clone https://github.com/<your_account_id>/AgentCore-Mastra-x402.git
 pnpm install
 ```
 
-そして環境変数用のファイルを作成します。
+次に環境変数用のファイルを作成します。
 
 ```txt
 cp pkgs/cdk/.env.example pkgs/cdk/.env
@@ -1858,8 +1875,10 @@ cp pkgs/cdk/.env.example pkgs/cdk/.env
 ```txt
 FACILITATOR_URL=https://x402.org/facilitator
 NETWORK=base-sepolia
+# 送金先のウォレットアドレスを指定
 ADDRESS=
 ENDPOINT_PATH=/weather
+# 送金元のウォレットアドレスを指定
 PRIVATE_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 ```
@@ -1956,3 +1975,5 @@ https://strandsagents.com/latest/
 https://github.com/strands-agents/sdk-typescript
 
 MCPの実装は今のままだとセキュアとは言えないのでその部分を改善したいのと、秘密鍵も環境変数として設定しており、ユーザーごとに切り替えることができない状態なのでここもユーザーごとに切り替えられるように**KMS**と**DynamoDB**を組み合わせてみたいなと思っています！
+
+ここまで読んでいただきありがとうございました！！！
