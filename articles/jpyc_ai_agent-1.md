@@ -43,7 +43,7 @@ https://www.nikkei.com/article/DGXZQOUB146U80U5A810C2000000/
 :::message
 ステーブルコインとは？
 
-法定通貨と価値が1:1で連動しているデジタル通貨
+法定通貨と価値が**1:1**で連動しているデジタル通貨
 Ethereumなどパブリックブロックチェーンで発行しているケースが多い
 :::
 
@@ -64,6 +64,16 @@ https://dune.com/kirifuda_hq/jpyc-dashboard
 **Dune**というブロックチェーン用のアナリティクスツールを使っており、**ブロックチェーン**に特化した**BigQuery** + **Locker**だと思ってもらえればOKです！
 
 https://dune.com/
+
+---
+
+ちなみにドル建てのステーブルコインとして**USDC**というものも存在します。
+
+https://www.circle.com/usdc
+
+:::message
+**USDC**の発行元は**Circle**という会社です。
+:::
 
 ---
 
