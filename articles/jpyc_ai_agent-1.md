@@ -3,7 +3,7 @@ title: "MastraとJPYC SDKで作る金融AIエージェント！"
 emoji: "🪙"
 type: "tech" 
 topics: ["Mastra", "TypeScript", "MCP", "生成AI", "Web3"]
-published: false
+published: true
 ---
 
 ![](/images/jpyc_ai_agent-1/0.jpeg)
