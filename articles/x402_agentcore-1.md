@@ -12,6 +12,10 @@ published: false
 
 みなさん、こんにちは！
 
+この記事は[AWS CDK Advent Calendar 2025](https://qiita.com/advent-calendar/2025/aws-cdk)25日目の記事になります！
+
+https://qiita.com/advent-calendar/2025/aws-cdk
+
 今回紹介するAI Agentは先日開催された **AI Builders Day プレイベント**でお話しさせていただいたAI Agentを深く掘り下げてみた記事になります！！
 
 > **イベントページ**
