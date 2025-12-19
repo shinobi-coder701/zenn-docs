@@ -14,6 +14,10 @@ published: true
 
 今回の記事は、 アドベントカレンダーの[AIエージェント構築＆運用 Advent Calendar 2025](https://qiita.com/advent-calendar/2025/agents)と[Model Context Protocol(MCP) Advent Calendar 2025](https://qiita.com/advent-calendar/2025/mcp)への応募を兼ねた記事となっています！！
 
+https://qiita.com/advent-calendar/2025/agents
+
+https://qiita.com/advent-calendar/2025/mcp
+
 **ステーブルコイン**を自然言語で操作できたら面白くないですか？！
 
 今回は、**JPYC SDK**を使って**JPYC**を操作できる**AIエージェント**を作成してみましたのでその実装内容を深く掘り下げていきます！！！
