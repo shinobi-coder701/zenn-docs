@@ -3,7 +3,7 @@ title: "Amazon Bedrock AgentCoreとCDKとMastraとx402で構築する金融AIエ
 emoji: "🤖"
 type: "tech" 
 topics: ["Mastra", "TypeScript", "AWS", "生成AI", "Web3"]
-published: false
+published: true
 ---
 
 ![](/images/x402_agentcore-1/0.jpeg)
