@@ -2,7 +2,7 @@
 title: "イーサリアム創始者も注目！？ Plasmaを再発明したINTMAXを徹底解剖"
 emoji: "🧮"
 type: "tech" 
-topics: ["ethereum", "layer2", "zkrollup", "plasma", "intmax"]
+topics: ["ethereum", "ゼロ知識証明", "Web3", "plasma", "intmax"]
 published: false
 ---
 
