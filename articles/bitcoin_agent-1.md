@@ -6,6 +6,8 @@ topics: ["Web3", "AI", "MCP", "StrandsAgent", "Hono"]
 published: false
 ---
 
+![](/images/bitcoin_agent-1/title.jpeg)
+
 この記事は [Model Context Protocol Advent Calendar 2025](https://qiita.com/advent-calendar/2025/mcp) の記事です。
 
 https://qiita.com/advent-calendar/2025/mcp
