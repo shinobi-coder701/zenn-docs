@@ -10,7 +10,7 @@ published: true
 
 ## はじめに
 
-この記事は[Web3 Advent Calendar 2025](https://qiita.com/advent-calendar/2025/web3)の25日目の記事です！
+この記事は[Web3 Advent Calendar 2025](https://qiita.com/advent-calendar/2025/web3)の14日目の記事です！
 
 https://qiita.com/advent-calendar/2025/web3
 
