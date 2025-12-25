@@ -3,7 +3,7 @@ title: "Bitcoin MCPとStrands Agentを使ってBitcoin AIエージェントを�
 emoji: "💰"
 type: "tech" 
 topics: ["Web3", "AI", "MCP", "StrandsAgent", "Hono"]
-published: false
+published: true
 ---
 
 ![](/images/bitcoin_agent-1/title.jpeg)
