@@ -3,7 +3,7 @@ title: "OpenSAML5で実装するSAML 2.0 〜仕組みの解説と実践ガイド
 emoji: "🛠"
 type: "tech" 
 topics: ["SAML", "認証", "Java", "AWS", "SpringBoot"]
-published: false
+published: true
 ---
 
 ![](/images/opensaml-aws-lambda-1/0.jpeg)
