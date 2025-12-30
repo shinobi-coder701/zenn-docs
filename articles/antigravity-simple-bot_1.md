@@ -26,11 +26,13 @@ published: false
 
 ## はじめに
 
-**「328行のコードで本番運用できるBotって作れるの?」**
+**「328行のコードで暗号資産のBotって作れるの?」**
 
 そう思われるかもしれませんが、実際に動いているコードがあります。
 
 今回作ったのは、**Hyperliquid**取引所のFunding Rate(FR)を監視して、異常値を検知したらTelegramに通知するBotです！
+
+https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api
 
 > スクショ
 
@@ -40,7 +42,7 @@ published: false
 
 https://github.com/mashharuki/simple_bot
 
-仮想通貨botterアドカレを呼んで触発されて作ってみました。
+仮想通貨botterアドカレを読んで触発されて作ってみました。
 
 https://qiita.com/advent-calendar/2025/botter
 
@@ -66,7 +68,7 @@ https://note.com/makaneko_ai/n/n09000b8ff097
 
 具体的にはHyperliquidのFRを監視して、異常値を超えた銘柄があったらTelegramに通知を飛ばしたいです。
 
-まず仕様書を作るにあたって、必要な情報を私に質問してください。いきなり実装を始めずSpec駆動開発とt-wadaさんのテスト駆動開発の考え方を参考して設計・実装を進めてください。
+まず仕様書を作るにあたって、必要な情報を私に質問してください。いきなり実装を始めずSpec駆動開発とt-wadaさんのテスト駆動開発の考え方を参考にして設計・実装を進めてください。
 
 パッケージマネージャーは、bunを使用してください。
 言語は、TypeScriptを使用してください。
