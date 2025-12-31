@@ -3,7 +3,7 @@ title: "Google Antigravityで作る初めての暗号資産bot"
 emoji: "🤖"
 type: "tech"
 topics: ["bun", "hono", "typescript", "googlecloud", "antigravity"]
-published: false
+published: true
 ---
 
 ![](/images/antigravity-simple-bot_1/title.jpeg)
