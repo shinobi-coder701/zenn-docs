@@ -6,6 +6,8 @@ topics: ["AWS","CDK","GraphQL","Nextjs","サーバーレス"]
 published: false
 ---
 
+![](/images/aws_appsync_dynamodb-1/title.jpeg)
+
 ## はじめに
 
 「AppSyncって興味あるけど、VTL（Velocity Template Language）を書くのが辛くて挫折した...」
@@ -27,6 +29,7 @@ published: false
 
 本記事では、以下の内容を実際のコードと図解を交えて解説していきます。
 
+:::message
 **技術面での学び**
 - **脱VTL** - JavaScriptリゾルバーでの開発体験の向上
 - **AWS CDK** - TypeScriptでインフラをコード化
@@ -35,13 +38,14 @@ published: false
 - **Cognito認証** - セキュアなユーザー管理
 - **GraphQL Code Generator** - 型安全性の確保
 - **モノレポ構成** - pnpm workspacesでの統合管理
+:::
 
+:::message
 **実戦での学び**
 - 認証後の無限レンダリング問題とその解決法（3時間溶けました）
 - DynamoDB + GSIの設計パターン
 - AppSyncのコスト試算と最適化
-
-2025年時点での**最新のベストプラクティス**をお届けします。
+:::
 
 ## 完成イメージ
 
