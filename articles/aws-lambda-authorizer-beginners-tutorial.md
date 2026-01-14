@@ -3,7 +3,7 @@ title: "【AWS初心者向け】Lambda Authorizerで学ぶAPI認証の基礎と�
 emoji: "🔐"
 type: "tech"
 topics: ["aws", "lambda", "認証", "cognito", "cdk"]
-published: false
+published: true
 ---
 
 ![](/images/aws-lambda-authorizer-beginners-tutorial/title.jpeg)
@@ -25,6 +25,8 @@ Lambda Authorizerを使うと「こんなに柔軟に認証処理を実装する
 ## Lambda Authorizerとは
 
 Lambda Authorizerは**API Gatewayのカスタム認証機能**です。 
+
+https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html
 
 Lambdaで認証ロジックを実装することで、外部のIdP（Identity Provider）や独自の認証基盤と連携することができます。
 
@@ -741,134 +743,6 @@ resultsCacheTtl: cdk.Duration.minutes(30),
   - `aws-jwt-verify`がバンドルされていない
   - 環境変数が未設定
   - TypeScriptのビルドエラー
-
-## 実践的な応用例
-
-### 応用1: カスタムコンテキストの活用
-
-Lambda Authorizerで設定したcontextをバックエンドLambdaで活用できます。
-
-```typescript
-// custom-auth-lambda.ts
-const context = {
-  userId: decodedJWT.sub,  // JWTから取得
-  email: decodedJWT.email,
-  scope: decodedJWT.scope,
-  companyId: '456',  // 外部DBから取得した情報も注入可能
-  role: 'ADMIN',
-};
-```
-
-それをバックエンドのLambda関数に渡して独自ロジックを実行できます！
-
-```typescript
-// api-lambda.ts
-export const handler = async (event: any) => {
-  // ユーザーID、権限、会社IDを取得する
-  const { userId, role, companyId } = event.requestContext.authorizer;
-
-  // ロールベースのアクセス制御
-  if (role !== 'ADMIN') {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ message: 'Forbidden' }),
-    };
-  }
-
-  // ユーザー固有のデータを取得
-  const userData = await getUserData(userId, companyId);
-  
-  return {
-    statusCode: 200,
-    body: JSON.stringify(userData),
-  };
-};
-```
-
-### 応用2: 複数のスコープ管理
-
-Resource Serverに複数のスコープを定義し、Lambda Authorizerでチェックできます。
-
-```typescript
-// cognito-stack.ts
-const readScope = new cognito.ResourceServerScope({
-  scopeName: 'awesomeapi.read',
-  scopeDescription: 'Read access',
-});
-
-const writeScope = new cognito.ResourceServerScope({
-  scopeName: 'awesomeapi.write',
-  scopeDescription: 'Write access',
-});
-
-const resourceServer = new cognito.UserPoolResourceServer(
-  this,
-  'ResourceServer',
-  {
-    identifier: 'awesomeapi',
-    userPool: this.cognitoUserPool,
-    scopes: [readScope, writeScope],
-  }
-);
-```
-
-```typescript
-// custom-auth-lambda.ts
-const decodedJWT = await cognitoJwtVerifier.verify(authToken);
-
-// スコープの確認
-const scopes = decodedJWT.scope?.split(' ') || [];
-
-if (!scopes.includes('awesomeapi-resource-server/awesomeapi.read')) {
-  console.error('Insufficient scope');
-  throw new Error('Unauthorized');
-}
-
-// contextにスコープ情報を含める
-const context = {
-  userId: decodedJWT.sub,
-  scopes: decodedJWT.scope,
-};
-```
-
-### 応用3: 外部IdPとの連携
-
-Auth0やOktaなどの外部IdPと連携する場合も、JWT検証ロジックを変更するだけです。
-
-```typescript
-// 外部IdP用のJWT検証（例: Auth0）
-import { createRemoteJWKSet, jwtVerify } from 'jose';
-
-const JWKS = createRemoteJWKSet(
-  new URL('https://YOUR_DOMAIN.auth0.com/.well-known/jwks.json')
-);
-
-export const handler = async (event: any) => {
-  const authToken = extractToken(event);
-
-  try {
-    // Auth0のJWTを検証
-    const { payload } = await jwtVerify(authToken, JWKS, {
-      issuer: 'https://YOUR_DOMAIN.auth0.com/',
-      audience: 'YOUR_AUDIENCE',
-    });
-
-    // 以降の処理は同じ
-    const policyDocument = generatePolicy('Allow', event.methodArn);
-    
-    return {
-      principalId: payload.sub,
-      policyDocument,
-      context: {
-        userId: payload.sub,
-        email: payload.email,
-      },
-    };
-  } catch (err) {
-    throw new Error('Unauthorized');
-  }
-};
-```
 
 ## まとめ
 
