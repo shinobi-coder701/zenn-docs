@@ -418,7 +418,7 @@ curl -X GET $API_ENDPOINT \
   "message": "Hello from protected resource!",
   "userId": "123",
   "role": "ADMIN",
-  "timestamp": "2026-01-13T12:34:56.789Z"
+  "timestamp": "2026-01-11T12:34:56.789Z"
 }
 ```
 
