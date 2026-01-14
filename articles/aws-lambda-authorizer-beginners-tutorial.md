@@ -254,6 +254,10 @@ graph TB
 
 それでは、実際に手を動かして実装していきましょう！このチュートリアルでは、既存のGitリポジトリをクローンして、すぐにLambda Authorizerを体験できます。
 
+サンプルコードは以下に格納しています。
+
+https://github.com/mashharuki/lambda-authorizer-sample
+
 ### Step 1: リポジトリのクローンと依存関係のインストール
 
 まず、サンプルプロジェクトをクローンします。
