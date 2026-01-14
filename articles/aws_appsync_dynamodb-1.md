@@ -10,13 +10,21 @@ published: false
 
 ## はじめに
 
-「AppSyncって興味あるけど、VTL（Velocity Template Language）を書くのが辛くて挫折した...」
-「GraphQLのバックエンドを自前で構築・運用するのは大変そう...」
-「Next.js 16とReact 19の最新機能を活かしながら、型安全に開発したい...」
+- **「AppSyncって興味あるけど、VTL（Velocity Template Language）を書くのが辛くて挫折した...」**
+- **「GraphQLのバックエンドを自前で構築・運用するのは大変そう...」**
+- **「Next.js 16とReact 19の最新機能を活かしながら、型安全に開発したい...」**
 
 そんな悩みを抱えている方に朗報です。
 
-**2022年以降、AppSyncはJavaScriptランタイムをサポートし、もうVTLを書く必要がなくなりました。** この記事では、JavaScriptリゾルバーを使った最新のAppSync開発を、**AWS CDK + DynamoDB + Next.js 16** の構成で、実際に遭遇したトラブルと解決策を交えながら徹底解説します。
+**2022年以降、AppSyncはJavaScriptランタイムをサポートし、もうVTLを書く必要がなくなりました。** 
+
+https://aws.amazon.com/jp/blogs/news/aws-appsync-graphql-apis-supports-javascript-resolvers/
+
+この記事では、JavaScriptリゾルバーを使った最新のAppSync開発を**AWS CDK + DynamoDB + Amplify + Next.js 16**の構成で解説します。
+
+今回は以下のコードをベースにしてアップグレードさせています。
+
+https://github.com/aws-samples/aws-cdk-examples/blob/main/typescript/appsync-graphql-dynamodb
 
 ### この記事の対象読者
 
@@ -202,7 +210,7 @@ GSIを活用することで、NoSQLでもRDBのようなリレーショナルク
 graph TB
     User["ユーザー<br/>(ブラウザ)"]
 
-    subgraph Frontend["フロントエンド (pkgs/frontend)"]
+    subgraph Frontend["フロントエンド"]
         NextJS["Next.js 16<br/>App Router"]
         Amplify["AWS Amplify<br/>GraphQLクライアント"]
         TypeGen["GraphQL<br/>Code Generator"]
@@ -223,7 +231,7 @@ graph TB
         end
     end
 
-    subgraph IaC["Infrastructure as Code (pkgs/cdk)"]
+    subgraph IaC["Infrastructure as Code"]
         CDK["AWS CDK<br/>TypeScript"]
         Schema["GraphQL<br/>Schema"]
         ResolverCode["Resolver<br/>Code (JS)"]
@@ -252,11 +260,14 @@ graph TB
     style IaC fill:#f0f0f0
 ```
 
-このアーキテクチャでは、フロントエンド（Next.js + Amplify）で型安全なGraphQL通信を行い、Cognito User Poolで安全なユーザー管理を実現しています。APIはAppSyncでサーバーレスGraphQL APIとして提供され、DynamoDB + GSIで効率的なデータ取得を行います。そして全てのインフラをCDKでコード化しています。
+このアーキテクチャでは、フロントエンド（Next.js + Amplify）で型安全なGraphQL通信を行い、Cognito User Poolで安全なユーザー管理を実現しています。
+
+APIはAppSyncでサーバーレスGraphQL APIとして提供され、DynamoDB + GSIで効率的なデータ取得を行います。そして全てのインフラをCDKでコード化しています。
 
 ### GraphQL Code Generator で開発体験が劇的に向上
 
 スキーマ定義から自動で型を生成できるため、開発がとても楽になります。
+
 ```graphql
 type Car {
   licenseplate: String!
@@ -393,6 +404,8 @@ Cognito User Pool を**デフォルト認証**に設定し、API_KEY と IAM は
 
 AppSyncといえば、以前はVTL（Velocity Template Language）でリゾルバーを書く必要があり、正直かなり辛い開発体験でした。しかし、2022年からJavaScriptランタイムが登場し、今ではVTLを書く必要が一切なくなりました。
 
+https://aws.amazon.com/jp/blogs/compute/best-practices-for-working-with-the-apache-velocity-template-language-in-amazon-api-gateway/
+
 > **📝 VTL (Velocity Template Language) とは？**
 >
 > Javaベースのテンプレートエンジンで、AppSyncの初期からリゾルバー記述言語として採用されていました。しかし、独特な構文、ローカルデバッグの難しさ、JSON生成の煩雑さなどから学習コストが高く、多くの開発者がAppSync採用を躊躇する「最大の壁」となっていました。
@@ -419,12 +432,14 @@ export function request(ctx) {
 ```
 
 JavaScriptリゾルバーのメリット：
+
 - **エディタのサポートが効く** - VSCodeでの補完、シンタックスハイライト
 - **デバッグが容易** - console.logでのデバッグが可能
 - **JavaScriptの豊富なライブラリが使える** - 日付操作、バリデーションなど
 - **チームメンバーの学習コストが低い** - ほとんどの開発者がJavaScriptを知っている
 
-AppSyncを中心としたアーキテクチャを図で表すと、以下のようになります。
+AppSyncを中心としたアーキテクチャを図で表すと以下のようになります。  
+※ サンプルコードから構成はほぼ変えていないのでそのまま抜粋させていただいています。
 
 ![AppSync Architecture](/images/aws_appsync_dynamodb-1/appsync-architecture.png)
 
@@ -569,7 +584,7 @@ new Resolver(this, "PipelineResolverGetDefects", {
 
 #### データ取得の全体像（シンプル版）
 
-まず、AppSyncがどのように複数テーブルから情報を取得するのか、全体像を把握しましょう。
+まず、AppSyncがどのように複数テーブルから情報を取得するのか全体像を把握しましょう。
 
 ```mermaid
 sequenceDiagram
@@ -621,9 +636,6 @@ const result = await client.graphql({
 #### 詳細なデータフロー（詳細版）
 
 より詳しい処理の流れを知りたい方向けに、認証を含めた詳細なシーケンス図も用意しました。
-
-<details>
-<summary><strong>▶ 詳細なシーケンス図を見る（クリックして展開）</strong></summary>
 
 ```mermaid
 sequenceDiagram
@@ -681,10 +693,12 @@ sequenceDiagram
     deactivate Browser
 ```
 
-処理の流れとしては、まずユーザーがナンバープレートを入力し、Cognitoから認証トークンを取得します。その後、AppSync APIにGraphQLクエリを送信し、Query.getCarが解決されてDynamoDBから車両データを取得（GetItem）します。次にCar.defectsフィールドが解決され、GSIを使って関連する不具合データを取得（Query）。最後にレスポンスが統合され、TypeScriptの型付きでフロントエンドに返却されます。
+処理の流れ：
 
-</details>
-
+- まずユーザーがナンバープレートを入力し、Cognitoから認証トークンを取得します。
+- その後、AppSync APIにGraphQLクエリを送信し、Query.getCarが解決されてDynamoDBから車両データを取得（GetItem）します。
+- 次にCar.defectsフィールドが解決され、GSIを使って関連する不具合データを取得（Query）。
+- 最後にレスポンスが統合され、TypeScriptの型付きでフロントエンドに返却されます。
 
 > **⚠️ N+1問題とは？**
 >
@@ -740,7 +754,9 @@ console.log(data.getCar.brand);        // "Toyota"
 console.log(data.getCar.defects);      // [14件の不具合]
 ```
 
-1回のクエリで車両と不具合の両方を取得できるため、N+1問題を完全に回避できます。パイプラインリゾルバーで処理を分離することで再利用性も向上し、GSIによる効率的なクエリで高速なデータ取得を実現。Cognito認証でセキュアなAPI呼び出しを行い、スキーマ駆動で型安全性とドキュメント性を両立しています。
+1回のクエリで車両と不具合の両方を取得できるため、N+1問題を完全に回避できます。
+
+パイプラインリゾルバーで処理を分離することで再利用性も向上し、GSIによる効率的なクエリで高速なデータ取得を実現。Cognito認証でセキュアなAPI呼び出しを行い、スキーマ駆動で型安全性とドキュメント性を両立しています。
 
 ---
 
@@ -877,7 +893,8 @@ export const useAuth = () => {
 
 #### 認証トークンのセキュリティについて
 
-Amplifyはデフォルトで認証トークンを**LocalStorage**に保存します。XSS攻撃のリスクを懸念する場合は、以下の対策を検討してください：
+Amplifyはデフォルトで認証トークンを**LocalStorage**に保存します。  
+XSS攻撃のリスクを懸念する場合は、以下の対策を検討してください：
 
 - **HttpOnly Cookie**を使った実装（ただしAmplifyのデフォルト挙動をオーバーライドする必要あり）
 - **厳格なCSP（Content Security Policy）**の設定
@@ -1289,21 +1306,6 @@ GSIは**テーブル作成後**に追加すると時間がかかります。CDK�
 
 ---
 
-## コスト試算
-
-東京リージョンでの月間運用コストを試算してみました。
-
-| サービス | 想定利用量 | 月額 |
-|---------|----------|-----|
-| AppSync | 100万リクエスト | $4.00 |
-| DynamoDB (オンデマンド) | 100万読込 + 10万書込 | $1.50 |
-| Cognito | 1,000 MAU | $0.00（無料枠） |
-| **合計** | | **約 $5.50** |
-
-開発環境の場合、さらに低コストで運用可能です。
-
----
-
 ## 実際の開発フロー
 
 このプロジェクトでの実際の開発フローを紹介します。
@@ -1391,7 +1393,7 @@ pnpm dev
 
 ### おわりに
 
-このプロジェクトを通じて、**VTLから解放されたAppSync開発の快適さ**と、**型安全な開発の威力**を実感しました。
+このプロジェクトを通じて、**VTLから解放されたAppSync開発の快適さ**と**型安全な開発の威力**を実感しました。
 
 特に印象的だったのは以下の点です：
 
@@ -1403,19 +1405,13 @@ pnpm dev
 
 4. **Next.js 16 + React 19** - Server Componentsなど最新機能を活かせる環境が整い、今後の拡張性も十分です。
 
-認証後の無限レンダリング問題で3時間溶けたり、DynamoDBのGSI設計で悩んだりと、ハマりポイントもありましたが、それらを乗り越えることで、より深い理解とベストプラクティスを得ることができました。
-
-**2025年現在、AppSyncはVTL時代とは別物になっています。** もしVTLで挫折した経験がある方は、ぜひもう一度チャレンジしてみてください。きっと開発体験の違いに驚くはずです。
-
-この記事が、あなたのフルスタック開発の一助となれば幸いです。
+ここまで読んでいただきありがとうございました！！
 
 ## サンプルコード
 
 完全なサンプルコードは以下のリポジトリで公開しています：
 
 https://github.com/mashharuki/AppSyncSample-2
-
-リポジトリには、完全なCDKスタック定義、GraphQLスキーマとリゾルバー、Next.jsフロントエンド実装、ユニットテスト（42テスト）、デプロイスクリプト、サンプルデータ投入ツールが含まれています。
 
 ## Xのフォローもよろしくお願いします！！
 

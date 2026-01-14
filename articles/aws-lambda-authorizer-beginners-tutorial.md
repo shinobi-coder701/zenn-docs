@@ -629,17 +629,6 @@ awesomeApiResource.addMethod(
 | **キャッシュ制御** | 複数のパラメータを組み合わせてキャッシュキーを作成可能 |
 | **実践的** | 本番環境でよく使われるパターン |
 
-コメントアウトされているTOKENタイプの実装も参考にしてください：
-
-```typescript
-// Lambda Authorizer with 'TOKEN' type（コメントアウト済み）
-// const authorizer = new apigw.TokenAuthorizer(this, 'awesome-api-authorizer', {
-//   handler: authLambda,
-//   identitySource: apigw.IdentitySource.header('authorization'),
-//   resultsCacheTtl: cdk.Duration.seconds(0),
-// });
-```
-
 TOKENタイプは、シンプルなJWT検証のみを行う場合に適しています。
 
 ## クリーンアップ（リソースの削除）
@@ -650,18 +639,14 @@ TOKENタイプは、シンプルなJWT検証のみを行う場合に適してい
 
 ```bash
 # スタックを削除
-cdk destroy
+pnpm run cdk destroy '*'
 
 # 確認を求められたら「y」を入力
 ```
 
-削除には2〜3分かかります。以下のリソースが削除されます：
-
-- Cognito User Pool
-- Lambda関数（2つ）
-- API Gateway
-- CloudWatch Logs
-- IAMロール
+:::message
+クライアントアプリケーションはマネジメントコンソールから削除する必要があります！
+:::
 
 ### 手動確認（任意）
 
@@ -681,7 +666,8 @@ cdk destroy
 
 ### CDKブートストラップリソース（残しても可）
 
-CDKブートストラップで作成されたリソース（S3バケット等）は残ります。これらは他のCDKプロジェクトでも使用されるため、通常は削除不要です。
+CDKブートストラップで作成されたリソース（S3バケット等）は残ります。  
+これらは他のCDKプロジェクトでも使用されるため、通常は削除不要です。
 
 もし完全に削除したい場合：
 
@@ -760,7 +746,7 @@ resultsCacheTtl: cdk.Duration.minutes(30),
 
 ### 応用1: カスタムコンテキストの活用
 
-Lambda Authorizerで設定したcontextを、バックエンドLambdaで活用できます。
+Lambda Authorizerで設定したcontextをバックエンドLambdaで活用できます。
 
 ```typescript
 // custom-auth-lambda.ts
@@ -773,9 +759,12 @@ const context = {
 };
 ```
 
+それをバックエンドのLambda関数に渡して独自ロジックを実行できます！
+
 ```typescript
 // api-lambda.ts
 export const handler = async (event: any) => {
+  // ユーザーID、権限、会社IDを取得する
   const { userId, role, companyId } = event.requestContext.authorizer;
 
   // ロールベースのアクセス制御
@@ -894,7 +883,7 @@ export const handler = async (event: any) => {
 ✅ AWS CDKによるインフラのコード化
 ✅ カスタムコンテキストの活用方法
 
-Lambda Authorizerは柔軟な認証を実現する強力な機能です。
+**Lambda Authorizer**は柔軟な認証を実現する強力な機能です。
 
 最初は複雑に感じるかもしれませんが、一度理解すれば様々なユースケースに応用できます。
 
@@ -902,13 +891,10 @@ Lambda Authorizerは柔軟な認証を実現する強力な機能です。
 
 ### 参考文献
 
-**AWS公式ドキュメント**:
 - [Use API Gateway Lambda authorizers](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html)
 - [Configure Lambda authorizer](https://docs.aws.amazon.com/apigateway/latest/developerguide/configure-api-gateway-lambda-authorization.html)
 - [Input to Lambda authorizer](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-lambda-authorizer-input.html)
-
-**ライブラリ・仕様**:
 - [aws-jwt-verify (GitHub)](https://github.com/awslabs/aws-jwt-verify)
 - [OAuth 2.0 仕様 (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749)
 - [JWT 仕様 (RFC 7519)](https://datatracker.ietf.org/doc/html/rfc7519)
-
+- [【API Gateway】トークンベースのLambda Authorizerを使用した認可を実装してみた](https://zenn.dev/t_oishi/articles/357f0f6e5a051f)
