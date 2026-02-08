@@ -3,7 +3,7 @@ title: "DynamoDBとAppSyncとCDKでGraphQL APIを作ってみよう！"
 emoji: "🛠"
 type: "tech" 
 topics: ["AWS","CDK","GraphQL","Nextjs","サーバーレス"]
-published: false
+published: true
 ---
 
 ![](/images/aws_appsync_dynamodb-1/title.jpeg)
