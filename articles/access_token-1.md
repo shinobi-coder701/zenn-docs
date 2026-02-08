@@ -135,7 +135,7 @@ useEffect(() => {
 }, [refresh]);
 ```
 
-### 2. APIクライアントで 401 の自動回復
+## 2. APIクライアントで 401 の自動回復
 
 `createApiClient` の中で `401` を検知したら `refresh()` を呼び、同じリクエストを1回だけ再実行します。
 
@@ -151,34 +151,30 @@ if (response.status === 401 && !hasRetried) {
 
 > この「1回だけ」が重要で、無限リトライを避けられます。
 
-### 3. ルーティングガードを明示
+## 3. ルーティングガードを明示
 
 未認証なら `/login` に飛ばし、認証済みなら `/protected` に入れる構成です。
 
 - `pkgs/frontend/src/components/ProtectedRoute.tsx`
 - `pkgs/frontend/src/App.tsx`
 
----
+# ハマりどころと対処
 
-## ハマりどころと対処
-
-### 1. Cookieが送られない
+## 1. Cookieが送られない
 
 `fetch` 側で `credentials: "include"` が必須です。  
 
 この実装では `login`, `refresh`, `api-client` の全てで明示しています。
 
-### 2. refresh多重実行
+## 2. refresh多重実行
 
 画面の同時リクエスト時に refresh が重複しやすいため、`refreshInProgress` でガードしています。
 
 - `pkgs/frontend/src/contexts/auth-context.tsx`
 
-### 3. 失敗時の状態不整合
+## 3. 失敗時の状態不整合
 
 refresh失敗時に token/user が残るとバグの温床になるため、`catch` で確実に `null` へ戻します。
-
----
 
 ## テストで担保していること
 
@@ -212,16 +208,12 @@ refresh失敗時に token/user が残るとバグの温床になるため、`cat
 
 Spec駆動開発とテスト駆動開発で開発を進めればユニットテストコードもちゃんと生成してくれますよ！
 
----
-
 # 実装してわかったトレードオフ
 
 1. Cookie運用は実装コストが上がる  
 2. ただし Token責務分離により、設計意図が明確になる  
 3. 自動リトライはUXを改善するが、失敗時の終了条件が必須  
 4. 学習用でも失敗系テストを先に考えると、実装が安定する
-
----
 
 # まとめ
 
@@ -231,3 +223,6 @@ JWT認証は「ログイン成功」だけ作っても実運用に耐えませ�
 
 同じテーマで学ぶ人はまず「アクセストークンやリフレッシュトークンをどこに格納するか」や「失敗系をどう扱うか」から設計すると、全体が崩れにくくなると思います！
 
+## Xのフォローもよろしくお願いします！！
+
+https://twitter.com/haruki_web3
