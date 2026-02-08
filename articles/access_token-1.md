@@ -52,9 +52,21 @@ https://github.com/mashharuki/accesstoken-sample
 実装の入り口:
 
 - `pkgs/frontend/src/contexts/auth-context.tsx`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/contexts/auth-context.tsx
+
 - `pkgs/frontend/src/lib/api-client.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/lib/api-client.ts
+
+
 - `pkgs/backend/src/routes/auth.routes.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/backend/src/routes/auth.routes.ts
+
 - `pkgs/backend/src/services/auth.service.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/backend/src/services/auth.service.ts
 
 # サンプルアプリのイメージ
 
@@ -156,7 +168,12 @@ if (response.status === 401 && !hasRetried) {
 未認証なら `/login` に飛ばし、認証済みなら `/protected` に入れる構成です。
 
 - `pkgs/frontend/src/components/ProtectedRoute.tsx`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/components/ProtectedRoute.tsx
+
 - `pkgs/frontend/src/App.tsx`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/App.tsx
 
 # ハマりどころと対処
 
@@ -171,6 +188,8 @@ if (response.status === 401 && !hasRetried) {
 画面の同時リクエスト時に refresh が重複しやすいため、`refreshInProgress` でガードしています。
 
 - `pkgs/frontend/src/contexts/auth-context.tsx`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/contexts/auth-context.tsx
 
 ## 3. 失敗時の状態不整合
 
@@ -200,9 +219,20 @@ refresh失敗時に token/user が残るとバグの温床になるため、`cat
 参考:
 
 - `pkgs/backend/src/__tests__/auth.routes.test.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/backend/src/__tests__/auth.routes.test.ts
+
 - `pkgs/backend/src/__tests__/auth.service.test.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/backend/src/__tests__/auth.service.test.ts
+
 - `pkgs/frontend/src/__tests__/api-client.test.ts`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/__tests__/api-client.test.ts
+
 - `pkgs/frontend/src/__tests__/auth-context.test.tsx`
+
+https://github.com/mashharuki/accesstoken-sample/tree/main/pkgs/frontend/src/__tests__/auth-context.test.tsx
 
 テストがあることで、認証フロー変更時の回帰を検知しやすくなります！
 
