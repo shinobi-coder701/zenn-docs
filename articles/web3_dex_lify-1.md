@@ -3,7 +3,7 @@ title: "DEXアグリゲーターLI.FIを試してみた！"
 emoji: "💰"
 type: "tech" 
 topics: ["Web3","blockchain","DEX","typescript","Ethereum"]
-published: false
+published: true
 ---
 
 # はじめに
