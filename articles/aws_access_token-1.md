@@ -349,12 +349,722 @@ https://github.com/mashharuki/AWS-AccessToken-sample-app
 
 ## 今回開発したアプリのアーキテクチャ
 
+- **目的**: アクセストークン/リフレッシュトークンの仕組みを学習するためのサンプル
+- **構成**: モノレポ (pnpm workspace)
+- **パッケージマネージャー**: pnpm@10.20.0
+- **フロントエンド**: React 19.2.0 + Vite 7.2.4 + TypeScript 5.9.3 + React Router v7.12.0
+- **バックエンド**: Hono 4.11.4 + Node.js 24.x (ESM) + TypeScript 5.8.3
+- **認証・セキュリティ**: 
+  - JWT処理: jose@6.1.3
+  - パスワードハッシング: bcryptjs@2.4.3
+  - CSRF保護実装済み
+- **データベース**: AWS DynamoDB
+  - UsersTable (GSI: username-index)
+  - SessionsTable (TTL有効)
+  - RefreshTokensTable (TTL有効)
+  - CsrfTokensTable (TTL有効)
+- **AWS SDK**: @aws-sdk/client-dynamodb@3.974.0, @aws-sdk/lib-dynamodb@3.974.0
+- **テスティング**: Vitest 4.0.17 (Frontend: 46テスト, Backend: 115テスト)
+- **Linter/Formatter**: Biome 2.3.11 (ルート), ESLint 9.39.1 (フロントエンド)
+- **インフラ**: AWS CDK (Lambda, API Gateway, CloudFront, S3, DynamoDB)
+- **認証方式**: Access Tokenはレスポンスで返却、Refresh TokenはHttpOnly Cookieで保持
+
+### AWS インフラストラクチャ
+
+```mermaid
+graph TB
+    subgraph "クライアント"
+        Browser[ブラウザ]
+    end
+
+    subgraph "AWS Cloud"
+        subgraph "配信層"
+            CloudFront[CloudFront CDN]
+            S3[S3 Bucket<br/>静的コンテンツ]
+        end
+
+        subgraph "API層"
+            APIGateway[API Gateway<br/>REST API]
+            Authorizer[Lambda Authorizer<br/>JWT検証]
+        end
+
+        subgraph "アプリケーション層"
+            BackendLambda[Lambda Function<br/>Hono App<br/>Node.js 24.x]
+        end
+
+        subgraph "データ層"
+            DynamoDB[(DynamoDB)]
+            UsersTable[(UsersTable<br/>GSI: username-index)]
+            SessionsTable[(SessionsTable<br/>TTL有効)]
+            RefreshTokensTable[(RefreshTokensTable<br/>TTL有効)]
+            CsrfTokensTable[(CsrfTokensTable<br/>TTL有効)]
+        end
+    end
+
+    Browser -->|HTTPS| CloudFront
+    CloudFront -->|静的ファイル| S3
+    Browser -->|API呼び出し| APIGateway
+    APIGateway -->|認証| Authorizer
+    Authorizer -->|JWT検証| BackendLambda
+    APIGateway -->|リクエスト| BackendLambda
+    BackendLambda -->|クエリ/更新| DynamoDB
+    DynamoDB -.->|含む| UsersTable
+    DynamoDB -.->|含む| SessionsTable
+    DynamoDB -.->|含む| RefreshTokensTable
+    DynamoDB -.->|含む| CsrfTokensTable
+
+    style Browser fill:#e1f5ff
+    style CloudFront fill:#ff9900
+    style S3 fill:#569a31
+    style APIGateway fill:#ff4f8b
+    style Authorizer fill:#ff9900
+    style BackendLambda fill:#ff9900
+    style DynamoDB fill:#527fff
+    style UsersTable fill:#527fff
+    style SessionsTable fill:#527fff
+    style RefreshTokensTable fill:#527fff
+    style CsrfTokensTable fill:#527fff
+```
+
+### アプリケーション層の詳細
+
+```mermaid
+graph LR
+    subgraph "Frontend (React SPA)"
+        Main[main.tsx]
+        AuthContext[AuthContext<br/>認証状態管理]
+        ApiClient[API Client<br/>401自動リトライ]
+        Components[Components<br/>LoginForm/SignupForm<br/>ProtectedRoute]
+    end
+
+    subgraph "Backend (Hono on Lambda)"
+        App[app.ts<br/>Honoアプリ]
+        
+        subgraph "Routes"
+            AuthRoutes[auth.routes.ts<br/>/auth/*]
+            UserRoutes[user.routes.ts<br/>/users/*]
+            ProtectedRoutes[protected.routes.ts<br/>/api/*]
+        end
+
+        subgraph "Middleware"
+            AuthMW[auth.middleware.ts<br/>JWT検証]
+            ErrorMW[error-handler.ts<br/>エラー処理]
+        end
+
+        subgraph "Services"
+            AuthService[auth.service.ts<br/>認証ロジック<br/>bcryptjs/jose]
+            UserService[user.service.ts<br/>ユーザー管理]
+            CsrfService[csrf.service.ts<br/>CSRF保護]
+        end
+
+        subgraph "Domain"
+            TokenRecords[token-records.ts<br/>トークンロジック]
+            UserRecords[user-records.ts<br/>ユーザーロジック]
+        end
+
+        subgraph "Lib"
+            DynamoDBLib[dynamodb.ts<br/>DocumentClient]
+        end
+    end
+
+    Main --> AuthContext
+    AuthContext --> ApiClient
+    ApiClient --> Components
+    Components --> App
+
+    App --> AuthRoutes
+    App --> UserRoutes
+    App --> ProtectedRoutes
+    
+    AuthRoutes --> AuthMW
+    UserRoutes --> AuthMW
+    ProtectedRoutes --> AuthMW
+    
+    AuthMW --> ErrorMW
+    
+    AuthRoutes --> AuthService
+    UserRoutes --> UserService
+    
+    AuthService --> CsrfService
+    AuthService --> TokenRecords
+    UserService --> UserRecords
+    
+    TokenRecords --> DynamoDBLib
+    UserRecords --> DynamoDBLib
+
+    style Main fill:#61dafb
+    style AuthContext fill:#61dafb
+    style ApiClient fill:#61dafb
+    style Components fill:#61dafb
+    style App fill:#ff6b35
+    style AuthRoutes fill:#ff6b35
+    style UserRoutes fill:#ff6b35
+    style ProtectedRoutes fill:#ff6b35
+    style AuthService fill:#4ecdc4
+    style UserService fill:#4ecdc4
+    style CsrfService fill:#4ecdc4
+    style DynamoDBLib fill:#95e1d3
+```
+
 ## 機能一覧表
+
+### 認証・認可
+1. **ユーザー登録**（POST /auth/signup）
+   - bcryptjsによるパスワードハッシング
+   - DynamoDB UsersTableへの永続化
+   - ユーザー名の重複チェック（GSI活用）
+
+2. **ログイン**（POST /auth/login）
+   - bcryptjsによるパスワード検証
+   - JWT（jose）によるAccess Token発行
+   - HttpOnly CookieによるRefresh Token発行
+   - セッション管理（DynamoDB SessionsTable）
+   - CSRF Token発行（DynamoDB CsrfTokensTable）
+
+3. **トークンリフレッシュ**（POST /auth/refresh）
+   - Refresh Token検証とAccess Token再発行
+   - セッションの有効性確認
+   - CSRF Token検証
+
+4. **ログアウト**（POST /auth/logout）
+   - セッション無効化
+   - Refresh Token削除
+   - CSRF Token削除
+
+### 保護リソース
+5. **保護リソース取得**（GET /api/protected）
+   - JWT認証ミドルウェア
+   - Access Token検証
+
+6. **ユーザー情報取得**（GET /users/me）
+   - 認証済みユーザーの情報取得
+   - DynamoDB UsersTableからの取得
+
+7. **ユーザー一覧取得**（GET /users）
+   - 全ユーザー一覧（認証必須）
+
+### フロントエンド機能
+8. **401時の自動リトライ**（createApiClient）
+   - トークン期限切れ時の自動リフレッシュ
+   - 最大1回のリトライ
+
+9. **認可ガードとルーティング**（ProtectedRoute）
+   - 未認証時のログインページへのリダイレクト
+   - React Router v7統合
+
+10. **トークンデバッグ表示**（TokenDebugPanel）
+    - 開発環境でのJWT情報表示
+    - 有効期限カウントダウン
+
+### インフラストラクチャ
+11. **Lambda Authorizer**（authorizer.ts）
+    - AWS API Gateway統合
+    - JWT検証とIAMポリシー生成
+
+12. **CSRF保護**（csrf.service.ts）
+    - ダブルサブミットクッキーパターン
+    - DynamoDB CsrfTokensTableでのトークン管理
 
 ## 機能毎の処理シーケンス図
 
+### 認証フロー概要
+
+```mermaid
+graph TD
+    Start([ユーザー操作開始])
+    
+    Start --> CheckAuth{認証済み?}
+    
+    CheckAuth -->|No| Login[ログイン画面表示]
+    Login --> Signup{新規ユーザー?}
+    Signup -->|Yes| SignupFlow[POST /auth/signup<br/>パスワードハッシング<br/>DynamoDB保存]
+    Signup -->|No| LoginFlow[POST /auth/login<br/>パスワード検証<br/>JWT発行]
+    
+    SignupFlow --> LoginFlow
+    LoginFlow --> SetTokens[Access Token: レスポンス<br/>Refresh Token: HttpOnly Cookie<br/>CSRF Token: Cookie]
+    
+    CheckAuth -->|Yes| Protected[保護リソースアクセス<br/>GET /users/me<br/>GET /api/protected]
+    SetTokens --> Protected
+    
+    Protected --> ValidToken{Token有効?}
+    ValidToken -->|Yes| Success[リソース返却]
+    ValidToken -->|No 401| Refresh[POST /auth/refresh<br/>自動リトライ]
+    
+    Refresh --> RefreshValid{Refresh成功?}
+    RefreshValid -->|Yes| NewToken[新しいAccess Token取得]
+    NewToken --> Retry[リクエスト再実行]
+    Retry --> Success
+    
+    RefreshValid -->|No| Logout[ログアウト<br/>セッション削除<br/>トークン削除]
+    Logout --> Login
+    
+    Success --> End([完了])
+
+    style Login fill:#ffe66d
+    style SignupFlow fill:#a8dadc
+    style LoginFlow fill:#a8dadc
+    style SetTokens fill:#06ffa5
+    style Protected fill:#b8f2e6
+    style Refresh fill:#ffd6a5
+    style Logout fill:#ffadad
+```
+
+### ログイン
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as Frontend(LoginForm)
+  participant AuthCtx as AuthContext
+  participant API as Backend(/auth/login)
+  participant AuthSvc as AuthService
+
+  User->>UI: ユーザー名/パスワード送信
+  UI->>AuthCtx: login(username, password)
+  AuthCtx->>API: POST /auth/login (credentials: include)
+  API->>AuthSvc: 認証/トークン発行
+  AuthSvc-->>API: accessToken + refreshToken
+  API-->>AuthCtx: accessToken + user (refreshTokenはCookie)
+  AuthCtx->>AuthCtx: accessToken/user をstate保存
+  AuthCtx-->>UI: ログイン完了
+```
+
+### アクセストークンのリフレッシュ
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant AuthCtx as AuthContext
+  participant API as Backend(/auth/refresh)
+  participant AuthSvc as AuthService
+  participant Cookie as Browser Cookie
+
+  AuthCtx->>API: POST /auth/refresh (Cookie送信)
+  Cookie-->>API: refreshToken
+  API->>AuthSvc: refresh(refreshToken)
+  AuthSvc-->>API: 新しいaccessToken
+  API-->>AuthCtx: accessToken
+  AuthCtx->>AuthCtx: JWTデコードしてuser更新
+```
+
+### 保護リソース取得
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Frontend(ProtectedPage)
+  participant ApiClient as createApiClient
+  participant API as Backend(/api/protected)
+  participant AuthMW as authMiddleware
+  participant AuthSvc as AuthService
+
+  UI->>ApiClient: GET /api/protected
+  ApiClient->>API: Authorization: Bearer accessToken
+  API->>AuthMW: トークン検証
+  AuthMW->>AuthSvc: verifyAccessToken(token)
+  AuthSvc-->>AuthMW: payload(user)
+  AuthMW-->>API: next()
+  API-->>ApiClient: Protected data
+  ApiClient-->>UI: data表示
+```
+
+### 401時の自動リトライ
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Frontend(ProtectedPage)
+  participant ApiClient as createApiClient
+  participant AuthCtx as AuthContext
+  participant API as Backend
+
+  UI->>ApiClient: GET /api/protected
+  ApiClient->>API: Authorization: Bearer expired
+  API-->>ApiClient: 401
+  ApiClient->>AuthCtx: refresh()
+  AuthCtx->>API: POST /auth/refresh (Cookie送信)
+  API-->>AuthCtx: new accessToken
+  AuthCtx-->>ApiClient: refresh完了
+  ApiClient->>API: GET /api/protected (再試行)
+  API-->>ApiClient: 200 data
+  ApiClient-->>UI: data表示
+```
+
+### 認可ガードとルーティング
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Router as App Routes
+  participant Guard as ProtectedRoute
+  participant AuthCtx as AuthContext
+  participant UI as ProtectedPage
+  participant Login as LoginForm
+
+  Router->>Guard: /protected へ遷移
+  Guard->>AuthCtx: isAuthenticated?
+  alt 認証済み
+    Guard-->>UI: ProtectedPage表示
+  else 未認証
+    Guard-->>Login: /loginへリダイレクト
+  end
+```
+
+### トークンデバッグ表示（devのみ）
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as ProtectedPage
+  participant Panel as TokenDebugPanel
+  participant AuthCtx as AuthContext
+  participant JWT as JWT Decoder (jose)
+
+  UI->>Panel: debugMode=true で描画
+  Panel->>AuthCtx: accessToken取得
+  alt accessTokenあり
+    Panel->>JWT: decodeJwt(accessToken)
+    JWT-->>Panel: payload/exp
+    Panel-->>UI: 期限・payload表示
+  else なし
+    Panel-->>UI: 何も表示しない
+  end
+```
+
+### ログイン失敗（認証エラー）
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as Frontend(LoginForm)
+  participant AuthCtx as AuthContext
+  participant API as Backend(/auth/login)
+  participant AuthSvc as AuthService
+  participant Err as ErrorHandler
+
+  User->>UI: ユーザー名/パスワード送信
+  UI->>AuthCtx: login(username, password)
+  AuthCtx->>API: POST /auth/login
+  API->>AuthSvc: 認証
+  AuthSvc-->>API: AuthenticationError
+  API->>Err: onError
+  Err-->>AuthCtx: 401 + error
+  AuthCtx-->>UI: 例外
+  UI-->>User: ログインに失敗しました
+```
+
+### リフレッシュ失敗（トークン不正/期限切れ）
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant ApiClient as createApiClient
+  participant AuthCtx as AuthContext
+  participant API as Backend(/auth/refresh)
+  participant AuthSvc as AuthService
+  participant Err as ErrorHandler
+
+  ApiClient->>AuthCtx: refresh()
+  AuthCtx->>API: POST /auth/refresh (Cookie送信)
+  API->>AuthSvc: refresh(refreshToken)
+  AuthSvc-->>API: TokenExpiredError / InvalidTokenError
+  API->>Err: onError
+  Err-->>AuthCtx: 401 + error
+  AuthCtx->>AuthCtx: accessToken/user を破棄
+  AuthCtx-->>ApiClient: 例外
+```
+
+### 保護リソース取得失敗（Authorizationヘッダ不正）
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Frontend(ProtectedPage)
+  participant ApiClient as createApiClient
+  participant API as Backend(/api/protected)
+  participant AuthMW as authMiddleware
+
+  UI->>ApiClient: GET /api/protected
+  ApiClient->>API: Authorization: (なし/不正)
+  API->>AuthMW: header検証
+  AuthMW-->>API: 401 error
+  API-->>ApiClient: 401
+  ApiClient-->>UI: 例外
+  UI-->>UI: データの取得に失敗しました
+```
+
+
 ## アプリのスクショ
+
+## 動かし方
+
+### インストール
+
+```bash
+pnpm i
+```
+
+### 開発サーバー起動
+
+```bash
+# フロントエンド（Vite dev server on http://localhost:5173）
+pnpm frontend dev
+
+# バックエンド（Hono server on http://localhost:3000）
+pnpm backend dev
+```
+
+### ビルド
+
+```bash
+# フロントエンド
+pnpm frontend build
+
+# バックエンド
+pnpm backend build
+
+# CDK
+pnpm cdk build
+```
+
+### テスト実行
+
+```bash
+# フロントエンド
+pnpm frontend test
+
+# バックエンド
+pnpm backend test
+
+# CDK
+pnpm cdk test
+```
+
+### リント/フォーマット
+
+```bash
+# フロントエンド（ESLint）
+pnpm frontend lint
+
+# ルート（Biome）
+pnpm format
+```
+
+### CDKデプロイ
+
+```bash
+pnpm cdk synth    # CloudFormationテンプレート生成
+pnpm cdk deploy   # デプロイ
+```
+
+クリーンナップ
+
+```bash
+pnpm cdk destroy '*'
+```
+
+### ログ例
+
+アクセストークンの検証に成功した時のログ
+
+```bash
+Verified access token payload: {
+  sub: 'user-demo-001',
+  username: 'demo',
+  iat: 1768794320,
+  exp: 1768795220
+}
+```
 
 ## ソースコードの解説
 
+### バックエンド
+
+バックエンドのフレームワークにはHonoを使っており、ミドルウェアを使ってLambda向けハンドラーとしてラップしています。
+
+```ts
+import "dotenv/config";
+import { handle } from "hono/aws-lambda";
+import { createApp } from "./app.js";
+
+// Hono Appインスタンスを作成
+const app = createApp();
+
+// Lambdaハンドラーをエクスポート
+export const handler = handle(app);
+```
+
+ローカルでも検証できるようにしています。
+
+```ts
+import { serve } from "@hono/node-server";
+import "dotenv/config";
+import { createApp } from "./app.js";
+
+// Hono Appインスタンスを作成
+const app = createApp();
+
+// Appをローカルサーバーで起動
+serve(
+  {
+    fetch: app.fetch,
+    port: 3001,
+  },
+  (info) => {
+    console.log(`Server is running on http://localhost:${info.port}`);
+  },
+);
+```
+
+**Lambda Authorizers**の実装は以下のような感じで、アクセストークンの取り出しと検証、IAMポリシーの作成を担当しています。
+
+```ts
+import "dotenv/config";
+import { AuthorizerService } from "./services/authorizer.service.js";
+
+type AuthorizerEvent = {
+  authorizationToken?: string;
+  methodArn: string;
+};
+
+type PolicyDocument = {
+  Version: "2012-10-17";
+  Statement: Array<{
+    Action: "execute-api:Invoke";
+    Effect: "Allow" | "Deny";
+    Resource: string;
+  }>;
+};
+
+type AuthorizerResponse = {
+  principalId: string;
+  policyDocument: PolicyDocument;
+  context?: Record<string, string>;
+};
+
+const authorizerService = new AuthorizerService();
+
+/**
+ * Lambda Authorizerのポリシードキュメントを構築する
+ * @param principalId 
+ * @param effect 
+ * @param resource 
+ * @param context 
+ * @returns 
+ */
+const buildPolicy = (
+  principalId: string,
+  effect: "Allow" | "Deny",
+  resource: string,
+  context?: Record<string, string>,
+): AuthorizerResponse => ({
+  principalId,
+  policyDocument: {
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Action: "execute-api:Invoke",
+        Effect: effect,
+        Resource: resource,
+      },
+    ],
+  },
+  context,
+});
+
+/**
+ * Authorizationヘッダーからトークンを抽出する
+ * @param authorizationToken 
+ * @returns 
+ */
+const extractToken = (authorizationToken?: string) => {
+  if (!authorizationToken) {
+    return "";
+  }
+  const trimmed = authorizationToken.trim();
+  if (trimmed.toLowerCase().startsWith("bearer ")) {
+    return trimmed.slice(7).trim();
+  }
+  return trimmed;
+};
+
+/**
+ * Lambda Authorizer for API Gateway
+ * @param event
+ * @returns
+ */
+export const handler = async (
+  event: AuthorizerEvent,
+): Promise<AuthorizerResponse> => {
+  // アクセストークンの取得
+  const token = extractToken(event.authorizationToken);
+  // アクセストークンの検証
+  const result = await authorizerService.validateAccessToken({ token });
+
+  if (result.status === "Allow") {
+    // アクセストークンが有効な場合、許可ポリシーを返す
+    // contextにユーザー情報を含める(ユーザーIDとユーザー名)
+    return buildPolicy(result.principalId, "Allow", event.methodArn, {
+      userId: result.context.userId,
+      username: result.context.username,
+    });
+  }
+
+  return buildPolicy("unauthorized", "Deny", event.methodArn);
+};
+```
+
+一番肝となるアクセストークンの発行や検証は以下のファイルにて実装しています！
+
+https://github.com/mashharuki/AWS-AccessToken-sample-app/blob/main/pkgs/backend/src/services/auth.service.ts
+
+### フロントエンド
+
+### CDKスタック
+
+CDKスタックファイルの本体は以下から参照が可能です！
+
+https://github.com/mashharuki/AWS-AccessToken-sample-app/blob/main/pkgs/cdk/lib/cdk-stack.ts
+
+フロントエンドは S3 + CloudFrontのよくある構成です。
+
+バックエンドは API Gateway + Lambda + DynamoDBのこれまたよく見る構成です。
+
+トークンの検証には**Lambda Authorizers**を採用しています。
+
+それらの構成をCDKスタックで一括管理・デプロイできるようにしています！
+
+ポイントは以下のところですね。
+
+自分のプロフィール情報を取得するエンドポイントにLambda Authorizerを紐づけています
+
+```ts
+// /users/me リソースを追加
+const meResource = usersResource.addResource("me");
+
+// GETおよびPATCHメソッドにオーソライザーを適用
+meResource.addMethod("GET", new apigateway.LambdaIntegration(userLambda), {
+    authorizationType: apigateway.AuthorizationType.CUSTOM,
+    authorizer,
+});
+
+meResource.addMethod(
+    "PATCH",
+    new apigateway.LambdaIntegration(userLambda),
+    {
+        authorizationType: apigateway.AuthorizationType.CUSTOM,
+        authorizer,
+    },
+);
+```
+
 # 参考文献
+
+- [JWT Decoder](https://www.jwt.io/ja)
+- [Hono Documentation](https://hono.dev/)
+- [React Router v7](https://reactrouter.com/)
+- [jose - JavaScript module for JWT](https://github.com/panva/jose)
+- [Vitest](https://vitest.dev/)
+- [AWS DynamoDB](https://aws.amazon.com/jp/dynamodb)
