@@ -18,6 +18,14 @@ https://zenn.dev/mashharuki/articles/aws-lambda-authorizer-beginners-tutorial
 
 ぜひ最後まで読んでいってください！
 
+# ※注意事項※
+
+:::message alert
+本記事で紹介しているソースコード等は検証・学習用です。
+
+参考程度に参照ください。
+:::
+
 # トークンベース認証とは
 
 まずは改めて**トークンベース認証**についておさらいしていきます！
@@ -795,28 +803,43 @@ sequenceDiagram
   UI-->>UI: データの取得に失敗しました
 ```
 
-
 ## アプリのスクショ
+
+アプリの動作イメージを共有します。
+
+ログインに成功すると保護されたページに遷移できるようなアプリです。
+
+![](/images/aws_access_token-1/0.png)
+
+セキュリティ上の観点からトークンはCookieの中に詰めるようにしています。
+
+![](/images/aws_access_token-1/1.png)
+
+以下はアクセストークンのサンプル例です！
+
+![](/images/aws_access_token-1/2.png)
+
+トークンやセッション情報はDynamoDBに格納するようにしています。
+
+![](/images/aws_access_token-1/5.png)
+
+![](/images/aws_access_token-1/6.png)
+
+![](/images/aws_access_token-1/7.png)
 
 ## 動かし方
 
-### インストール
+では動かし方の説明です！
+
+### 依存関係インストール
 
 ```bash
 pnpm i
 ```
 
-### 開発サーバー起動
-
-```bash
-# フロントエンド（Vite dev server on http://localhost:5173）
-pnpm frontend dev
-
-# バックエンド（Hono server on http://localhost:3000）
-pnpm backend dev
-```
-
 ### ビルド
+
+以下のコマンドを順番に実行してビルドエラーが起きないことを確認します。
 
 ```bash
 # フロントエンド
@@ -829,37 +852,19 @@ pnpm backend build
 pnpm cdk build
 ```
 
-### テスト実行
-
-```bash
-# フロントエンド
-pnpm frontend test
-
-# バックエンド
-pnpm backend test
-
-# CDK
-pnpm cdk test
-```
-
-### リント/フォーマット
-
-```bash
-# フロントエンド（ESLint）
-pnpm frontend lint
-
-# ルート（Biome）
-pnpm format
-```
-
 ### CDKデプロイ
 
+ではビルドで問題が起きないことを確認できたのでいよいよリソースをまとめてAWS上にデプロイします！
+
 ```bash
-pnpm cdk synth    # CloudFormationテンプレート生成
-pnpm cdk deploy   # デプロイ
+# デプロイ
+pnpm cdk deploy   
 ```
 
-クリーンナップ
+
+### リソースのクリーンナップ
+
+検証が終わったら忘れずにリソースを削除しましょう！
 
 ```bash
 pnpm cdk destroy '*'
@@ -867,7 +872,9 @@ pnpm cdk destroy '*'
 
 ### ログ例
 
-アクセストークンの検証に成功した時のログ
+アクセストークンの検証に成功した時のログは以下のようになるはずです！
+
+ちゃんとLambda AuthorizerからユーザーIDとユーザー名が渡されていますね！
 
 ```bash
 Verified access token payload: {
@@ -1006,6 +1013,7 @@ export const handler = async (
   if (result.status === "Allow") {
     // アクセストークンが有効な場合、許可ポリシーを返す
     // contextにユーザー情報を含める(ユーザーIDとユーザー名)
+    // ここで詰めた値は後続のlambdaに渡せる
     return buildPolicy(result.principalId, "Allow", event.methodArn, {
       userId: result.context.userId,
       username: result.context.username,
@@ -1021,6 +1029,50 @@ export const handler = async (
 https://github.com/mashharuki/AWS-AccessToken-sample-app/blob/main/pkgs/backend/src/services/auth.service.ts
 
 ### フロントエンド
+
+認証系のAPIを呼び出す処理は全て`auth-context.tsx`に実装しています。
+
+https://github.com/mashharuki/AWS-AccessToken-sample-app/blob/main/pkgs/frontend/src/contexts/auth-context.tsx
+
+ポイントは各APIの呼び出し時に`credentials: "include",`オプションをつけてトークンなどをCookieに詰めているところです。
+
+```ts
+// login API呼び出し
+const res = await fetch(`${API_BASE_URL}/auth/login`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+  body: JSON.stringify({ username, password }),
+});
+```
+
+トークン更新の部分のAPI呼び出しの実装は以下のようになっています！
+
+```ts
+// refresh API呼び出し
+const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+  method: "POST",
+  credentials: "include",
+});
+
+if (!res.ok) {
+  throw new Error("Refresh failed");
+}
+
+const data = (await res.json()) as RefreshResponse;
+if (!data.accessToken) {
+  throw new Error("Invalid refresh response");
+}
+
+// レスポンスとして帰ってきたアクセストークンをデコードする
+const payload = decodeJwt(data.accessToken);
+console.log("Decoded JWT payload:", payload);
+// ペイロードからユーザーIDとユーザー名を取得する
+const userId = payload.sub as string;
+const username = payload.username as string;
+```
 
 ### CDKスタック
 
@@ -1059,6 +1111,18 @@ meResource.addMethod(
     },
 );
 ```
+
+# まとめ
+
+今回は以上になります！
+
+トークンベース認証については苦手意識がありましたが、実際に自分でアプリを構築してみてグッと解像度が上がりました。
+
+アクセストークンをCookieに詰めたりするなどセキュリティを意識した実装方法も学べたので非常に良かったです！
+
+皆さんもぜひAWSを使ってサーバーレスなトークンベース認証アプリを実装してみては？！
+
+ここまで読んでいただきありがとうございました！
 
 # 参考文献
 
