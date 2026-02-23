@@ -1,11 +1,6 @@
-### 依存関係のインストール
-`npm i`
-
-### 新しい記事の作成
-`npx zenn new:article --slug [記事のスラッグ] --title [タイトル] --type [tech/idea] --emoji [絵文字]`
-
-### 新しい本の作成
-`npx zenn new:book`
-
-### プレビュー
-`npx zenn preview`
+よく使うコマンド:
+- 依存関係インストール: `npm i`
+- 記事作成: `npm run new:article -- --slug <slug> --title <title> --type tech --emoji <emoji>`
+- 本作成: `npm run new:book`
+- プレビュー: `npm run preview`
+- 直接実行（必要に応じて）: `npx zenn new:article ...`, `npx zenn new:book`, `npx zenn preview`

@@ -3,7 +3,7 @@ title: "AWS CDKでアクセストークンを使ったトークンベース認�
 emoji: "🚪"
 type: "tech" 
 topics: ["AWS","DynamoDB","セキュリティ","CDK","認証"]
-published: false
+published: true
 ---
 
 # はじめに
