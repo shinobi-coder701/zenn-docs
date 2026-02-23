@@ -1,88 +1,68 @@
-# Markdown Cheatsheet for Zenn & Qiita
+# Markdown Cheatsheet for Zenn & Qiita (Pro Edition)
 
-## Zenn Specific Syntax
-
-### Message Blocks (Info, Warning, Alert)
-Use these to highlight important information.
+## 📊 Visualizing with Mermaid (Zenn Only)
+フローチャートやシーケンス図をテキストで記述できます。
 
 ```markdown
-:::message
-This allows you to verify your changes.
-:::
-
-:::message alert
-This is a warning message. Use for critical info.
-:::
+```mermaid
+graph TD;
+    A[Request] --> B{Authorized?};
+    B -- Yes --> C[Display Data];
+    B -- No --> D[Redirect to Login];
+```
 ```
 
-### Details (Accordion)
-Use these for long logs or optional code.
+## 🔢 Math Expressions (KaTeX)
+数式を美しく表示します。
 
 ```markdown
-:::details Click to see the code
-Here is the hidden content.
-```javascript
-console.log("Hello");
-```
-:::
+$$
+e^{i\pi} + 1 = 0
+$$
+
+インライン表示: $a^2 + b^2 = c^2$
 ```
 
-### Link Cards
-To embed a nice link card:
-```markdown
-https://zenn.dev/
-```
-(Just paste the URL on its own line)
+## 📦 Zenn Specific Advanced Syntax
 
-## Qiita Specific Syntax
-
-### Note / Warning (New Style)
-Qiita supports GitHub-style alerts.
+### Content Embeds (YouTube, GitHub, etc.)
+URLを1行で記述するだけでリッチに表示されます。
 
 ```markdown
-> [!NOTE]
-> Useful information here.
-
-> [!WARNING]
-> Important warning here.
+@[youtube](videoId)
+@[github](https://github.com/user/repo)
+@[tweet](https://twitter.com/user/status/123)
 ```
 
-### Code Blocks with Filename
+### Footnotes
+補足説明に。
 ```markdown
-```python:app.py
-print("Hello Qiita")
-```
-```
+この記事は最高です[^1]。
 
-### Task Lists
-```markdown
-- [x] Done task
-- [ ] Todo task
+[^1]: 著者の主観です。
 ```
 
-## Universal Best Practices
+## 📝 Qiita Specific Nuances
 
-### Embedding Images
-- Zenn: Drag & drop to upload.
-- Qiita: Drag & drop to upload.
-- **Alt Text**: Always add alt text for accessibility. `![Alt Text](url)`
-
-### Headers
-- Use `#` for H1 (Title ONLY), start content with `##` (H2).
-- Don't skip levels (e.g., H2 -> H4 is bad).
-
-### Lists
-- Use `-` or `*` for bullet points.
-- Use `1.` for numbered lists.
-
-### Tables
-| Syntax | Description |
-| ----------- | ----------- |
-| Header | Title |
-| Paragraph | Text |
+### Diff Blocks
+変更箇所をわかりやすく示します。
 
 ```markdown
-| Syntax | Description |
-| :--- | :--- |
-| Header | Title |
+```diff:page.tsx
+  const hello = () => {
+-   console.log("Old");
++   console.log("New");
+  }
 ```
+```
+
+## 💡 Professional Tips
+- **Empty Lines**: 見出し（##）の前後には必ず空行を1つ入れましょう。レンダリングエラーを防ぎ、読みやすくなります。
+- **Comments**: 非公開のメモを記事内に残せます。
+    - `<!-- この部分は後で修正する -->`
+- **Tables with Alignment**:
+    ```markdown
+    | 左寄せ | 中央 | 右寄せ |
+    | :--- | :---: | ---: |
+    | Text | Text | Text |
+    ```
