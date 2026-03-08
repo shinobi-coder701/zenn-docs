@@ -1,5 +1,5 @@
 ---
-title: "Motia × AWS Strands Agentで作るAIエージェント開発入門"
+title: "Motia × Strands Agent SDKで作るAIエージェント開発入門"
 emoji: "🚀"
 type: "tech"
 topics: ["aws", "typescript", "AI", "StrandsAgent", "motia"]
