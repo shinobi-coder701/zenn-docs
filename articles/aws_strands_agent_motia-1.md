@@ -170,13 +170,17 @@ Motiaが「APIの玄関口」および「データの保管場所」となり、
 今回は、MotiaとAWS Strands Agentを組み合わせたAIバックエンドの基礎を解説しました。
 
 **この構成のメリット:**
-- **開発スピード**: 複雑なインフラ構築をMotiaが、エージェントループをStrandsが隠蔽してくれます。
-- **運用性**: Motiaの `traceId` により、AIがどのデータを参照して回答したかを容易に追跡できます。
-- **拡張性**: 将来的にPythonで重い計算処理を追加したい場合も、Motiaならシームレスに連携可能です。
+- **開発スピード**:   
+  複雑なインフラ構築をMotiaが、エージェントループをStrandsが隠蔽してくれます。
+- **運用性**:   
+  Motiaの `traceId` により、AIがどのデータを参照して回答したかを容易に追跡できます。
+- **拡張性**:  
+  将来的にPythonで重い計算処理を追加したい場合も、Motiaならシームレスに連携可能です。
 
 次回は、このバックエンドを呼び出す **「フロントエンド側の実装とフルスタック連携」** について詳しく解説する予定です。お楽しみに！
 
 ### 参考資料
+
 - [Motia Official Documentation](https://motia.dev/)
 - [Strands Agents SDK (GitHub)](https://github.com/aws-samples/strands-agents-sdk)
 - [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)
