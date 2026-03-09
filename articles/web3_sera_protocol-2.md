@@ -6,9 +6,15 @@ topics: ["ethereum", "dex", "stablecoin", "clob", "defi"]
 published: true
 ---
 
+:::message
+この記事はAIと力を合わせて執筆しました。
+:::
+
 # はじめに
 
 前回の記事で **Sera Protocol**の概要を取り上げました。
+
+https://zenn.dev/mashharuki/articles/web3_sera_protocol-1
 
 今回の記事では**Sera Protocol**のGraphQLの使い方を解説します！
 

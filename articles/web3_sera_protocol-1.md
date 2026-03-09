@@ -6,6 +6,10 @@ topics: ["ethereum", "dex", "stablecoin", "clob", "defi"]
 published: true
 ---
 
+:::message
+この記事はAIと力を合わせて執筆しました。
+:::
+
 # 1. 導入：既存DEXがFX決済で直面する「限界」
 
 現在、DeFi（分散型金融）の世界ではUniswapに代表されるAMM（自動マーケットメーカー）が主流です。
