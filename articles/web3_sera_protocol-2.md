@@ -1,5 +1,5 @@
 ---
-title: "Sera ProtocolのGraphQLを使ってみよう！"
+title: "Sera Protocolの深層へ。GraphQL APIで板情報やチャートデータを直接引っこ抜く方法"
 emoji: "🚀"
 type: "tech"
 topics: ["ethereum", "dex", "stablecoin", "clob", "defi"]
@@ -16,32 +16,32 @@ published: true
 
 https://zenn.dev/mashharuki/articles/web3_sera_protocol-1
 
-今回の記事では**Sera Protocol**のGraphQLの使い方を解説します！
+「板（CLOB）があるDEX」として非常に興味深いSeraですが、その真の面白さは**オンチェーンデータの透明性**にあります。今回は、Seraの心臓部からデータを直接引き出すための「GraphQL API」の使い方を徹底解説します！
 
-# APIを早速使ってみよう！
+なぜRESTではなくGraphQLなのか？ それは、DEXの膨大な板情報の中から「今、自分が必要なデータだけ」をピンポイントで、かつ高速に取得するためです。
 
-**Sera Protocol**のGraphQLでは次の5つのデータを取得することができます！
+# APIを早速叩いてみよう！
 
-- Market
-- Order
-- Depths
-- Charts
-- Tokens
+Sera Protocolでは、データのインデックスに **Goldsky** を採用しています。
+ブラウザ上でポチポチとクエリを試したい方は、以下のプレイグラウンドも覗いてみてください。
+[Goldsky Sera Subgraph](https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn)
 
-それぞれ呼び出していきたいと思います！
+今回は、主要な5つのデータを `curl` で取得する方法を紹介します！
 
-## Market
+**Tips:** 開発現場では、APIのレスポンスを `.json` ファイルとして保存しておくのが「鉄則」です。後で `jq` でフィルタリングしたり、挙動を比較したりする際に非常に役立ちます。
 
-マーケット`0xd99802ee8f16d6ff929e27546de15d03fdcce4bd`の情報を取得するには以下のcurlコマンドを実行します！
+## 1. Market（マーケット情報の取得）
+
+まずは基本となるマーケット情報です。特定のペアがどのような手数料設定になっているかを確認しましょう。
 
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"query": "{ market(id: \"0xd99802ee8f16d6ff929e27546de15d03fdcce4bd\") { id quoteToken { symbol decimals } baseToken { symbol decimals } quoteUnit makerFee takerFee minPrice tickSpace latestPrice } }"}' \
-  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq
+  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq . > market.json
 ```
 
-以下のような結果が返ってくればOKです！
+実行結果のサンプル（`market.json`）：
 
 ```json
 {
@@ -67,20 +67,20 @@ curl -s -X POST \
 }
 ```
 
-## Order
+ここで注目すべきは `latestPrice` です。これは単なる数値ではなく、プロトコル内部でのスケーリングがかかった状態の価格が返ってきます。
 
-オーダー情報を取得するには以下のcurlコマンドを実行します！
+## 2. Order（注文履歴の追跡）
 
-これはウォレットアドレス`0xda6e605db8c3221f4b3706c1da9c4e28195045f5`に関するものの情報を取得する例です。
+特定のウォレットがどのような注文を出しているか、あるいはキャンセルしたかを追跡できます。
 
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"query": "{ openOrders(first: 10, where: { user: \"0xda6e605db8c3221f4b3706c1da9c4e28195045f5\" }) { id market { id } priceIndex isBid rawAmount status } }"}' \
-  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq
+  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq . > orders.json
 ```
 
-以下のようになればOKです！
+実行結果のサンプル（`orders.json`）：
 
 ```json
 {
@@ -95,116 +95,27 @@ curl -s -X POST \
         "isBid": false,
         "rawAmount": "15223933",
         "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-139843184478670403461003023281457089717564369994116372380703065822621335553",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20262",
-        "isBid": false,
-        "rawAmount": "15223933",
-        "status": "pending"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849664",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "1",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849665",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "10000485",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849666",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "10000485",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849667",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "15306523",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849668",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "15306523",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-140685197532978852243070063496654886822763405288721159540432893777924849669",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20384",
-        "isBid": false,
-        "rawAmount": "15306523",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-142079350295030546128131884180834845964158529301099577624575723671132307456",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20586",
-        "isBid": false,
-        "rawAmount": "374254",
-        "status": "cancelled"
-      },
-      {
-        "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1-591583188115153175039970098735075236656846805549584683575755763842956656640",
-        "market": {
-          "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1"
-        },
-        "priceIndex": "20179",
-        "isBid": true,
-        "rawAmount": "366928",
-        "status": "cancelled"
       }
+      // ... 他のオーダーも同様に取得されます
     ]
   }
 }
 ```
 
-## Depths
+実際に叩いてみて気づいたのですが、`status` が `cancelled` になっているものも取得できるため、ユーザーの行動分析には非常に便利です。
 
-続いてDepthを取得する方法の解説です！
+## 3. Depths（板の厚みを知る）
 
-マーケット`0xd99802ee8f16d6ff929e27546de15d03fdcce4bd`のDepthを取得するには以下のcurlコマンドを実行します！
+CLOBにおいて最も重要な「板の厚み」を取得します。
 
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"query": "{ depths(first: 10, where: { market: \"0xd99802ee8f16d6ff929e27546de15d03fdcce4bd\", isBid: true, rawAmount_gt: \"0\" }, orderBy: priceIndex, orderDirection: desc) { priceIndex price rawAmount } }"}' \
-  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq
+  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq . > depths.json
 ```
 
-以下のようになればOKです！
+実行結果のサンプル（`depths.json`）：
 
 ```json
 {
@@ -219,66 +130,25 @@ curl -s -X POST \
         "priceIndex": "64059",
         "price": "100000000000000640590",
         "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64058",
-        "price": "100000000000000640580",
-        "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64048",
-        "price": "100000000000000640480",
-        "rawAmount": "9950000"
-      },
-      {
-        "priceIndex": "64047",
-        "price": "100000000000000640470",
-        "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64046",
-        "price": "100000000000000640460",
-        "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64036",
-        "price": "100000000000000640360",
-        "rawAmount": "9950000"
-      },
-      {
-        "priceIndex": "64035",
-        "price": "100000000000000640350",
-        "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64034",
-        "price": "100000000000000640340",
-        "rawAmount": "10000000"
-      },
-      {
-        "priceIndex": "64024",
-        "price": "100000000000000640240",
-        "rawAmount": "9950000"
       }
+      // ... 深さに応じてリストが続きます
     ]
   }
 }
 ```
 
-## Charts
+## 4. Charts（ロウソク足データの取得）
 
-続いてチャート情報を取得してみましょう！
-
-これはマーケット`0xd99802ee8f16d6ff929e27546de15d03fdcce4bd`のチャート情報を取得するためのcurlコマンドです！
+チャート描画に必要なヒストリカルデータも一発で取れます。
 
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"query": "{ chartLogs(first: 7, where: { market: \"0xd99802ee8f16d6ff929e27546de15d03fdcce4bd\", intervalType: \"1d\" }, orderBy: timestamp, orderDirection: desc) { timestamp open high low close baseVolume } }"}' \
-  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq
+  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq . > charts.json
 ```
 
-以下のようになればOKです！
+実行結果のサンプル（`charts.json`）：
 
 ```json
 {
@@ -291,34 +161,25 @@ curl -s -X POST \
         "low": "100.00000000000022",
         "close": "100.0000000000006406",
         "baseVolume": "9.413999999999956363"
-      },
-      {
-        "timestamp": "1764288000",
-        "open": "100.0000000000003",
-        "high": "100.00000000000035",
-        "low": "100.0000000000003",
-        "close": "100.00000000000035",
-        "baseVolume": "1.005999999999996478"
       }
     ]
   }
 }
 ```
 
-## Tokens
+## 5. Tokens（トークン情報の検索）
 
-最後に最後にトークンの情報を首都する方法を紹介します！
-
-今回はトークンシンボルに`USD`が含まれているものの情報を首都するcurlコマンドになります！
+最後に、プロトコルで扱われているトークン情報を取得する方法です。
+「USD」を含むトークンを検索してみましょう。
 
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"query": "{ tokens(where: { symbol_contains_nocase: \"USD\" }) { id symbol name decimals } }"}' \
-  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq
+  https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn | jq . > tokens.json
 ```
 
-以下のような結果が返ってくればOKです！
+実行結果のサンプル（`tokens.json`）：
 
 ```json
 {
@@ -341,10 +202,18 @@ curl -s -X POST \
 }
 ```
 
+# なぜ実行結果をファイルに残すのか？
+
+今回のようにコマンドの末尾に `> filename.json` を付けてリダイレクトするのは、単なる「整理整頓」以上の意味があります。
+
+1. **デバッグの高速化**: APIを何度も叩かずに、手元のJSONファイルを使ってスクリプトの開発やテストが進められます（レートリミット対策にもなります）。
+2. **履歴の保存**: プロトコルのアップデート前後でレスポンスがどう変わったか、Gitなどで管理して比較することが可能になります。
+3. **チーム共有**: 取得したJSONをチームメンバーに送るだけで、同じデータに基づいた議論ができます。
+
 # まとめ
 
-今回はここまでです！
+いかがでしたでしょうか？
+実際に `curl` で生データを叩いてファイルに保存してみると、Sera Protocol がオンチェーンでどのように「板」を表現しているのか、その解像度がぐっと上がったはずです。
 
-実際にデータを取得してみて**Sera Protocol**に対する解像度が上がったのではないでしょうか？
-
-次回はbunとTypeScriptを使ったスクリプトの実装方法の解説を紹介します！
+APIでデータが取れるようになれば、次は「自動化」したくなりますよね？
+次回は **Bun + TypeScript** を使って、これらの保存したJSONを活用しながら、プログラムから美しくデータを扱う実装方法を解説します。お楽しみに！
