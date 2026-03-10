@@ -3,7 +3,7 @@ title: "Sera Protocolのチュートリアルに挑戦してみた！"
 emoji: "🤑"
 type: "tech"
 topics: ["ethereum", "dex", "stablecoin", "clob", "defi"]
-published: false
+published: true
 ---
 
 # はじめに
