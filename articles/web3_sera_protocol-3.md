@@ -1,8 +1,8 @@
 ---
-title: "Sera Protocolの情報を取得するスクリプトを実装してみよう！"
+title: "curl 卒業。Bun + TypeScript で Sera Protocol の自動化基盤を爆速で構築する"
 emoji: "🚀"
 type: "tech"
-topics: ["ethereum", "dex", "stablecoin", "clob", "defi"]
+topics: ["ethereum", "dex", "stablecoin", "clob", "defi", "typescript", "bun"]
 published: true
 ---
 
@@ -12,222 +12,151 @@ published: true
 
 # はじめに
 
-これまで記事で **Sera Protocol**の概要を取り上げてきました。
+前回までの記事で、Sera Protocol の概要と `curl` を使ったデータ取得の基本を学びました。
 
 https://zenn.dev/mashharuki/articles/web3_sera_protocol-1
 
 https://zenn.dev/mashharuki/articles/web3_sera_protocol-2
 
-今回の記事では**Sera Protocol**の情報を取得するスクリプトの実装方法を解説します！
+しかし、私たちはエンジニアです。いつまでも手動で `curl` を叩いているわけにはいきません。今回は、**Bun + TypeScript** を使って、Sera Protocol のデータを自動で引っこ抜き、自由自在に扱うための「最強の自動化基盤」を構築します。
 
-# Sera ProtocolのGraphQLで取得できる種類のデータ
+なぜ Node.js ではなく **Bun** なのか？ それは TypeScript を設定なしでそのまま実行できる爆速な体験と、`fetch` が標準搭載されているスマートさがあるからです。正直、一度この体験を知ると元には戻れません。
 
-前回の記事でも紹介しましたが、**Sera Protocol**のGraphQLでは次の5つのデータを取得することができます！
+# 自動化基盤をセットアップする
 
-- Market
-- Order
-- Depths
-- Charts
-- Tokens
-
-この記事ではその内の一つである`Market`を取得するスクリプトを実装してみたいと思います。
-
-# サンプルコードを実装してみよう！
-
-以下のコマンドを順番に実行して環境をセットアップします。
+まずは爆速で環境を作りましょう。
 
 ```bash
-mkdir sample
-cd sample
+mkdir sera-api-client
+cd sera-api-client
 bun init -y
 ```
 
-`package.json`の内容を以下のようにします。
+`package.json` に開発用のスクリプトを追加しておきます。
 
 ```json
 {
-  "name": "api-sample-app",
-  "module": "index.ts",
+  "name": "sera-api-client",
+  "module": "src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "bun run ./src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
   }
 }
 ```
 
-## 2つのユーティリティファイルを用意
+# 型安全な GraphQL クライアントの実装
 
-- `utils/constants.ts`
+ここからが TypeScript の真骨頂です。GraphQL のレスポンスに型を当てることで、プロパティの補完が効く「最高に気持ちいい」開発体験を手に入れます。
 
-  ```ts
-  export const SUBGRAPH_URL = "https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn";
-  ```
+## 1. 共通定数とヘルパー関数の定義
 
-- `utils/helpers.ts`
+まずは API のエンドポイントと、通信を支えるヘルパー関数を実装します。
 
-  ```ts
-  import { SUBGRAPH_URL } from "./constants";
-
-  /**
-   * API call helper function to query the subgraph
-   * @param query 
-   * @param variables 
-   * @returns 
-   */
-  export async function querySubgraph(query: any, variables = {}) {
-    const response = await fetch(SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables })
-    });
-    
-    const { data, errors } = await response.json();
-    if (errors) throw new Error(errors[0].message);
-    return data;
-  }
-  ```
-
-## メイン関数を実装
-
-今回はマーケットの情報を取得するだけのシンプルな内容となっています。
+- `src/utils/constants.ts`
 
 ```ts
-import { querySubgraph } from "./utils/helper";
+export const SUBGRAPH_URL = "https://api.goldsky.com/api/public/project_cmicv6kkbhyto01u3agb155hg/subgraphs/sera-pro/1.0.9/gn";
+```
+
+- `src/utils/helpers.ts`
+
+```ts
+import { SUBGRAPH_URL } from "./constants";
 
 /**
- * main method
+ * GraphQL Subgraph へのクエリ実行ヘルパー
+ * 型引数 T を渡すことでレスポンスを型安全に扱えます
  */
+export async function querySubgraph<T>(query: string, variables = {}): Promise<T> {
+  const response = await fetch(SUBGRAPH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+  
+  const { data, errors } = await response.json();
+  if (errors) {
+    throw new Error(`[GraphQL Error] ${errors[0].message}`);
+  }
+  return data as T;
+}
+```
+
+## 2. マーケット情報の型定義とメイン関数
+
+今回はマーケットの情報を取得するスクリプトを実装します。
+`Market` インターフェースを定義することで、`data.markets[0].id` と打つときに VS Code が完璧に補完してくれます。
+
+- `src/index.ts`
+
+```ts
+import { querySubgraph } from "./utils/helpers";
+
+/**
+ * Sera Protocol のマーケット型定義
+ */
+interface Market {
+  id: string;
+  quoteToken: { symbol: string; decimals: string };
+  baseToken: { symbol: string; decimals: string };
+}
+
+interface GetMarketsResponse {
+  markets: Market[];
+}
+
 const main = async () => {
-  // get markets info(list)
-  const data = await querySubgraph(`
+  console.log("🚀 Sera Protocol からマーケット情報を取得中...");
+
+  const data = await querySubgraph<GetMarketsResponse>(`
     query GetMarkets($first: Int!) {
       markets(first: $first) {
         id
-        quoteToken { symbol }
-        baseToken { symbol }
+        quoteToken { symbol decimals }
+        baseToken { symbol decimals }
       }
     }
   `, { first: 10 });
 
-  console.log(JSON.stringify(data, null, 2));
+  console.log(`✅ ${data.markets.length} 件のマーケットが見つかりました：`);
+  console.table(data.markets.map(m => ({
+    ID: m.id.slice(0, 10) + "...",
+    Pair: `${m.baseToken.symbol}/${m.quoteToken.symbol}`
+  })));
 };
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error("❌ エラーが発生しました:", err.message);
+  process.exit(1);
+});
 ```
 
-## 動かしてみよう！
+# 動かしてみよう！
 
-以下のコードを実行します！
+準備は整いました。以下のコマンドを叩いてみてください。
 
 ```bash
 bun run dev
 ```
 
-以下のようになればOKです！
+`console.table` を使ったことで、ターミナル上に整然とマーケットリストが表示されるはずです。`curl` で見ていたあの無機質な JSON が、あなたの手で制御可能な「データ」に変わった瞬間です！
 
-```json
-{
-  "markets": [
-    {
-      "id": "0x002930b390ac7d686f07cffb9d7ce39609d082d1",
-      "quoteToken": {
-        "symbol": "AUDD"
-      },
-      "baseToken": {
-        "symbol": "MYRC"
-      }
-    },
-    {
-      "id": "0x00382985b0cfa69ff72f22f21cc99e902d334c5b",
-      "quoteToken": {
-        "symbol": "MYRC"
-      },
-      "baseToken": {
-        "symbol": "KRWO"
-      }
-    },
-    {
-      "id": "0x004b97c5ecf61c89b1dd48725b5df3b03d2539ec",
-      "quoteToken": {
-        "symbol": "GYEN"
-      },
-      "baseToken": {
-        "symbol": "BRLA"
-      }
-    },
-    {
-      "id": "0x00630dbaa9a7605d7f7f336036be5978d59ef4f8",
-      "quoteToken": {
-        "symbol": "BRZ"
-      },
-      "baseToken": {
-        "symbol": "A7A5"
-      }
-    },
-    {
-      "id": "0x0072b15dba7dff1cae17c3806cbeeddcec46ca64",
-      "quoteToken": {
-        "symbol": "IDRX"
-      },
-      "baseToken": {
-        "symbol": "JPYC"
-      }
-    },
-    {
-      "id": "0x00b9608d7df89612df1af6929f0334dde36aed1a",
-      "quoteToken": {
-        "symbol": "VGBP"
-      },
-      "baseToken": {
-        "symbol": "MYRC"
-      }
-    },
-    {
-      "id": "0x00bc05c5ff325b5e75962b7200fd6992e3f2c43e",
-      "quoteToken": {
-        "symbol": "XSGD"
-      },
-      "baseToken": {
-        "symbol": "ARC"
-      }
-    },
-    {
-      "id": "0x0148d96aca15f325c6b4aa0685a28597545a23a3",
-      "quoteToken": {
-        "symbol": "MYRC"
-      },
-      "baseToken": {
-        "symbol": "ZARP"
-      }
-    },
-    {
-      "id": "0x0196a2f505494ea26cea1948b2d3202174cc6acb",
-      "quoteToken": {
-        "symbol": "THBK"
-      },
-      "baseToken": {
-        "symbol": "CADC"
-      }
-    },
-    {
-      "id": "0x0206ea31e927a65528b14cc8a2a2f7ca0b261836",
-      "quoteToken": {
-        "symbol": "ARZ"
-      },
-      "baseToken": {
-        "symbol": "KRWIN"
-      }
-    }
-  ]
-}
-```
+# 著者のこだわり：なぜ Interface を書くのか？
 
-ちゃんとマーケットの情報がリストで取得できましたね！
+「GraphQL のクエリを書くのも Interface を書くのも二度手間で面倒だ」と思うかもしれません。しかし、自動化ボットを運用する際、プロパティの打ち間違いによるランタイムエラーは致命傷になります。
+**「コンパイルが通れば、通信も通る」**。この安心感こそが、伝説のブロガーが TypeScript を愛してやまない理由です。
 
-今回はここまでになります！
+# おわりに：自動化の先にある未来
+
+今回はマーケット情報の取得までですが、この基盤さえあれば次のようなことが数行で実装できます：
+
+- `setInterval` で回して、新しいマーケットが作られたら Discord に通知する
+- 特定のペアの板（Depth）を監視して、裁定機会を見つける
+- 定期的にチャートデータを取得して、独自のテクニカル分析を行う
+
+**Sera Protocol の自動化ボット開発**の土台は完成しました。
+次回は、いよいよ板情報のデータを活用した、より実践的なロジックの実装に踏み込んでいきたいと思います。お楽しみに！
