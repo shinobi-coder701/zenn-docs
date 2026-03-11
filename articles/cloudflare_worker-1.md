@@ -1,128 +1,93 @@
 ---
-title: "【脱初心者！】Cloudflare Workers入門。JSが書ければ世界中にデプロイできる「魔法」に感動した"
+title: "vinextを試してみた！"
 emoji: "⚡️"
-type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["cloudflare", "workers", "serverless", "javascript", "hono"]
-published: false
+type: "tech"
+topics: ["cloudflare", "workers", "serverless", "javascript", "nextjs"]
+published: true
 ---
 
-# 3行まとめ
-- **どんな絶望があったか**: サーバー構築の煩雑さと、デプロイ完了までの「虚無の待ち時間」に心折れていた。
-- **結論（救済）**: Cloudflareなら、JSを書くだけで世界330拠点以上のエッジに数秒でデプロイされる「魔法」が手に入る。
-- **この記事の価値**: インフラ知識ゼロでも、D1（DB）やAIを駆使したフルスタックアプリを「爆速」で構築する知見が得られること。
+# はじめに
 
----
+先日**CloudFlare**から**vinext**なるものが発表されました！
 
-## 絶望の瞬間：デプロイは「苦行」だと思っていた
-エンジニアになって最初につまずいたのは、コードを書くことではなく、そのコードを**「世界に公開すること」**でした。
+https://blog.cloudflare.com/ja-jp/vinext/
 
-EC2を立てて、セキュリティグループを設定し、SSHでログインして、環境変数を整えて...。ようやくデプロイボタンを押しても、ビルドが終わるまでコーヒーを淹れて待つ。そんな「虚無の時間」が当たり前だと思っていました。
+**Next.js**と比較して最大57%バンドルサイズが小さくなるとのことで話題になってしました。
 
-「もっと、コードを書くことだけに集中させてくれよ...！」
+**vinext**は**Next.js**を**vite**ベースで再構築したものになります！
 
-そんな冷や汗交じりの祈りに応えてくれたのが、**Cloudflare**でした。
+# サンプルコード
 
-## そもそも、Cloudflareとは何者なのか？
-多くの人にとってCloudflareは「最強のCDN（Webサイトを速くして守るやつ）」という印象かもしれません。しかし、今のCloudflareはもはや**「インターネットそのものを動かすOS」**へと進化しています。
+今回試したコードは以下に格納してあります！
 
-世界330都市以上に張り巡らされた拠点（データセンター）を一つの巨大なコンピュータとして扱う。これがCloudflareの凄みです。
+https://github.com/mashharuki/cloudflare-workers-sample/tree/main/vinext-sample
 
-### Cloudflare Workers：エッジで動く「超軽量」ランタイム
-その中心にあるのが、今回紹介する**Cloudflare Workers**です。
-これは、Node.jsの代替品ではありません。ブラウザでおなじみのV8エンジンをベースにした、独自の**エッジ・コンピューティング・プラットフォーム**です。
+# vinextのはじめ方
 
-- **エッジとWorkersの関係**: あなたのコードは、アメリカの特定のデータセンターではなく、**ユーザーに一番近い拠点（エッジ）**で実行されます。だから、物理的に速い。
-- **Node.jsとは別物という衝撃**: Workersは起動速度を極限まで高めるため、Node.jsの重い機能を削ぎ落としています。
-    - **罠**: `fs`（ファイル操作）や、Node.js固有の `crypto` などの標準ライブラリがそのままでは動かないことがあります。
-    - **救い**: 最近は `compatibility_flags = [ "nodejs_compat" ]` を設定することで多くのライブラリが動くようになりました。それでも動かない場合は、エッジ向けに最適化された代替ライブラリ（`jose` など）を選ぶのがプロの立ち回りです。
+まずNext.jsのアプリを作ります。
 
-## 試行錯誤の沼を抜けて：何ができるようになったのか
-「ファイルの読み書きができないなら、何に使えばいいんだよ！」と最初は憤慨しましたが、それは大きな間違いでした。
-
-### 1. Cloudflare Workersでできること
-- **APIの構築**: Honoなどのフレームワークを使い、爆速なバックエンドを構築。
-- **認証・認可**: JWTの検証や、Auth0/Clerkとの連携。
-- **プロキシ・加工**: 既存のAPIのレスポンスを、ユーザーの手元に届く直前で書き換える。
-- **ABテスト**: ユーザーごとに異なるコンテンツをミリ秒単位で振り分ける。
-
-### 2. Cloudflare Pages：フロントエンドの安息の地
-Workersが「動的な処理」なら、**Cloudflare Pages**は「静的なアセット（HTML/CSS/JS）」を配信するためのプラットフォームです。
-GitHubと連携するだけで、VercelやNetlifyのように自動でWebサイトを公開できます。
-
-### 3. Wrangler：魔法使いの杖
-この強力なインフラを、エンジニアのコマンドラインから操るのが **Wrangler** というCLIツールです。
-- `wrangler dev`: 手元のマシンで、エッジの環境を忠実に再現。
-- `wrangler deploy`: 世界中のエッジへ、コードを一瞬で放流。
-- `wrangler types`: TypeScriptの型定義を自動生成し、開発を盤石にする。
-
-## 2026年の新常識：「Cloudflare Stack」でフルスタック開発
-今、Cloudflareを使うなら、単なるサーバーレス関数（Workers）だけで終わるのはもったいない。以下の機能群を組み合わせた**「Cloudflare Stack」**こそが、個人開発の最強の武器になります。
-
-| 機能 | 役割 | できること |
-| :--- | :--- | :--- |
-| **D1** | SQLデータベース | SQLiteベースの爆速リレーショナルDB。 |
-| **KV / Durable Objects** | ストレージ | キーバリューストレージや、ステートフルな処理。 |
-| **R2** | オブジェクトストレージ | S3互換。エグレス（転送量）課金がゼロという神仕様。 |
-| **Workers AI** | 生成AI | モデルをエッジで直接動かす。LLMや画像生成が即可能。 |
-| **Vectorize** | ベクトルDB | RAG（AIに知識を与える仕組み）をエッジで構築。 |
-
-:::message
-これらのリソースをWorkersから使うには、`wrangler.toml` ファイルに **「Binding（バインディング）」** の設定を書くだけ。環境変数を手動で管理する手間から解放されます。
-:::
-
-### Cloudflare Workers × Hono：黄金の組み合わせ
-今、WorkersでAPIを書くなら **Hono** は必須と言っていいでしょう。
-Honoは「エッジで動かすこと」を前提に日本で生まれた、世界中で愛される超軽量フレームワークです。Expressを使える人なら、1分で習得できます。型安全で、何より書き心地が最高です。
-
-### 生成AIとの親和性
-「Workers AI」の登場で、世界が変わりました。
-これまで重たいサーバーが必要だったLLM（Llamaなど）の実行が、Workersから1行書くだけで呼び出せます。APIキーを外部サービスに投げまくる必要もありません。自分たちのインフラ内で、安価にAIを組み込める。これこそが2026年現在のWorkersの醍醐味です。
-
-## 3分で世界に「Hello World」を放流する（実践編）
-御託はいいから、この「魔法」を体験してください。
-
-### 1. プロジェクトの召喚
 ```bash
-npm create cloudflare@latest
-```
-ここでは「Hono」を選択することをおすすめします。
-
-### 2. コードを書く（Honoの例）
-```typescript:src/index.ts
-import { Hono } from 'hono'
-const app = new Hono()
-
-app.get('/', (c) => c.text('Hello Cloudflare Workers! ⚡️'))
-
-export default app
+bun create next-app@latest
 ```
 
-### 3. 世界への放流
+デフォルトのプロジェクトを作ったら**vinext**プロジェクトにマイグレーションさせます！
+
 ```bash
-npx wrangler deploy
+bunx vinext init
 ```
-**見てください。デプロイが終わりました。**
-数秒前まで手元にあったコードが、今この瞬間、地球上のあらゆる拠点からアクセス可能になりました。
 
-## プロが教える「一歩先」のTips
-「Hello World」のその先へ進むあなたに、現場で役立つ知恵を贈ります。
+これで準備OKです！！
 
-### 1. 秘匿情報は `.dev.vars` で管理
-APIキーなどの機密情報をコードに直書きしてはいけません。ローカル開発では `.dev.vars` ファイルを使い、本番環境へは `wrangler secret put KEY_NAME` で登録しましょう。これが安全な開発の第一歩です。
+正常に終了したらアプリを起動させることができます！
 
-### 2. ログは `wrangler tail` で追いかける
-デプロイした後に「なぜか動かない」時は、`npx wrangler tail` コマンドを叩きましょう。本番環境で起きているエラーログが、あなたの手元のターミナルにリアルタイムで流れてきます。
+```bash
+bunx run dev:vinext 
+```
 
-## 終わりに：未来の自分（と戦友）へ
-「インフラは難しそう」「サーバー管理が面倒で個人開発が進まない」
+![](/images/cloudflare_worker-1/0.png)
 
-そう思っているあなたにこそ、このCloudflareという「魔法の杖」を振ってみてほしいです。
-JSが一行書ければ、あなたはもう世界規模のインフラを操り、AIを駆使し、DBを持つフルスタックアプリを放流できる魔法使いになれます。
+# Cloudflare Workersにデプロイしてみよう！
 
-まずは一つの `Response` を返してみましょう。その一歩が、あなたのエンジニアライフを「光速」に変えるはずです。
+では次にCloudflare Workersにデプロイしてみたいと思います！
 
-## 参考
+ここでハマりまして、設定ファイル`vite.config.ts`を以下のように修正する必要があります。
+
+```ts
+import { cloudflare } from "@cloudflare/vite-plugin";
+import vinext from "vinext";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [
+    vinext(),
+    cloudflare({
+      viteEnvironment: { 
+        name: "rsc", 
+        childEnvironments: ["ssr"] 
+      },
+    })
+  ],
+});
+```
+
+これで準備OKです！
+
+以下のコマンドでデプロイできます！
+
+```bash
+bunx vinext deploy
+```
+
+問題なければ**Cloudflare Workers**にデプロイされてローカルと同じような画面が描画されるはずです！
+
+簡単ですね！
+
+今回はここまでになります！
+
+## 参考文献
+
 - [Cloudflare Developers](https://developers.cloudflare.com/) - 公式ドキュメントが何よりの教科書。
 - [Hono Documentation](https://hono.dev/) - エッジ開発の最高の相棒。
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [Wrangler CLI Reference](https://developers.cloudflare.com/workers/wrangler/commands/)
+- [GitHub - vinext](https://github.com/cloudflare/vinext)

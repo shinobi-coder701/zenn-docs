@@ -2,7 +2,7 @@
 title: "curl 卒業。Bun + TypeScript で Sera Protocol の自動化基盤を爆速で構築する"
 emoji: "🚀"
 type: "tech"
-topics: ["ethereum", "dex", "stablecoin", "clob", "defi", "typescript", "bun"]
+topics: ["ethereum", "dex", "defi", "typescript", "bun"]
 published: true
 ---
 
