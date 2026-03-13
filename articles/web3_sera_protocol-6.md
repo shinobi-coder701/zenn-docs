@@ -129,7 +129,7 @@ npx @modelcontextprotocol/inspector
 
 # セキュリティについて：AIに「財布」を渡すということ
 
-:::info
+:::message
 **超重要**: このMCPサーバーを動かすには `PRIVATE_KEY` が必要です。
 :::
 
