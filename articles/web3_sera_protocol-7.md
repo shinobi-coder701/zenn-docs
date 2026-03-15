@@ -105,57 +105,28 @@ https://github.com/anthropics/skills/tree/main/skills
 
 結果は以下のようになりました！
 
-```json
-{
-  "skill_name": "sera-protocol",
-  "iteration": 1,
-  "configs": [
-    {
-      "name": "with_skill",
-      "pass_rate": {"mean": 1.0, "stddev": 0.0},
-      "time": {"mean": 88.07, "stddev": 31.2},
-      "tokens": {"mean": 31483, "stddev": 7460}
-    },
-    {
-      "name": "without_skill",
-      "pass_rate": {"mean": 0.83, "stddev": 0.14},
-      "time": {"mean": 69.47, "stddev": 22.4},
-      "tokens": {"mean": 23423, "stddev": 5020}
-    }
-  ],
-  "delta": {
-    "pass_rate": "+17%",
-    "time": "+27%",
-    "tokens": "+34%"
-  },
-  "evals": [
-    {
-      "eval_name": "graphql-orderbook",
-      "with_skill": {"pass_rate": 1.0, "passed": 8, "total": 8, "time_s": 66.4, "tokens": 21513},
-      "without_skill": {"pass_rate": 1.0, "passed": 8, "total": 8, "time_s": 51.1, "tokens": 18033}
-    },
-    {
-      "eval_name": "limit-bid-flow",
-      "with_skill": {"pass_rate": 1.0, "passed": 9, "total": 9, "time_s": 131.7, "tokens": 39321},
-      "without_skill": {"pass_rate": 0.89, "passed": 8, "total": 9, "time_s": 101.0, "tokens": 30163}
-    },
-    {
-      "eval_name": "mcp-chart-tool",
-      "with_skill": {"pass_rate": 1.0, "passed": 7, "total": 7, "time_s": 66.1, "tokens": 33614},
-      "without_skill": {"pass_rate": 0.71, "passed": 5, "total": 7, "time_s": 57.3, "tokens": 22072}
-    }
-  ],
-  "analysis": {
-    "observations": [
-      "With-skill achieves 100% pass rate across all 3 evals (24/24 assertions)",
-      "Without-skill drops on Eval 2 (complete_flow: missing market info fetch, wrong approve formula, no polling, no postOnly safety) and Eval 3 (wrong GraphQL entity name 'candles' vs 'chartLogs', missing '1w' interval)",
-      "Eval 1 is non-discriminating - both pass 8/8. The without-skill agent found correct info by reading the codebase directly",
-      "With-skill uses ~34% more tokens on average due to reading skill + reference files, but produces more complete and correct output",
-      "The biggest skill advantage is domain-specific knowledge: correct GraphQL entity names (chartLogs), price formulas (rawAmount*quoteUnit for approve), and safety mechanisms (resolvePostOnlyBidPriceIndex)"
-    ]
-  }
-}
-```
+まずは全体サマリーです。
+
+| 項目 | SKILLあり | SKILLなし | 差分（あり基準） |
+| :--- | :--- | :--- | :--- |
+| 平均Pass Rate | 1.00 (±0.00) | 0.83 (±0.14) | **+17%** |
+| 平均実行時間 | 88.07s (±31.2) | 69.47s (±22.4) | +27% |
+| 平均トークン数 | 31,483 (±7,460) | 23,423 (±5,020) | +34% |
+
+続いて、シナリオ別の比較です。
+
+| シナリオ | SKILLあり <br/>（Pass / Time / Tokens） | SKILLなし<br/>（Pass / Time / Tokens） | コメント |
+| :--- | :--- | :--- | :--- |
+| graphql-orderbook | 8/8 (100%)<br/> 66.4s<br/> 21,513 | 8/8 (100%)<br/> 51.1s<br/> 18,033 | 両者とも要件達成 |
+| limit-bid-flow | 9/9 (100%)<br/> 131.7s<br/> 39,321 | 8/9 (89%)<br/> 101.0s<br/> 30,163 | SKILLなしで精度低下 |
+| mcp-chart-tool | 7/7 (100%)<br/> 66.1s<br/> 33,614 | 5/7 (71%)<br/> 57.3s<br/> 22,072 | 差が最も大きい |
+
+分析ポイントをまとめると以下の通りです。
+
+- **SKILLありは3シナリオすべてで100%達成（24/24 assertions）**
+- SKILLなしはシナリオ2・3で失点（市場情報取得漏れ、approve式の誤り、ポーリング不足、postOnly安全策不足、`candles`/`chartLogs`取り違え、`1w` interval欠落）
+- シナリオ1は識別力が低く、両者とも満点
+- SKILLありはトークン消費が増える一方で、ドメイン固有知識を踏まえた実装の正確性・網羅性が向上
 
 中々の精度ですね！
 
