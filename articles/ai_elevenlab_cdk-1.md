@@ -343,6 +343,8 @@ https://elevenlabs.io/docs/eleven-agents/libraries/react
 
   試しにマイクをONにしてセッション開始してみると以下のように音声で色々と聞けちゃいます！！
 
+  ![](/images/ai_elevenlab_cdk-1/9.png)
+
 - **クリーンアップ**
 
   動作確認したら忘れずにリソースを削除しましょう！
