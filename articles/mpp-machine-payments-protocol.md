@@ -3,7 +3,7 @@ title: "AIエージェントが自律的に支払う「MPP（Machine Payments Pr
 emoji: "🤖"
 type: "tech" 
 topics: ["ai", "Stripe", "Tempo", "Web3", "Blockchain"]
-published: false
+published: true
 ---
 
 > この記事はAIと力を合わせて執筆しました！
