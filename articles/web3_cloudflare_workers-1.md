@@ -412,6 +412,305 @@ x402サーバーの実装の解説は以上です！
 
 ## MCPサーバー編
 
+MCPサーバーの方も**Hono**をベースにして作っています！
+
+```ts
+import { StreamableHTTPTransport } from "@hono/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import type { GetWeatherToolDeps } from "./tools/weather";
+import { createDefaultGetWeatherToolDeps, registerGetWeatherTool } from "./tools/weather";
+import type { X402FetchClientEnv } from "./x402-fetch-client";
+
+type CreateAppOptions = {
+  getWeatherToolDepsFactory?: (getEnv: () => X402FetchClientEnv) => GetWeatherToolDeps;
+};
+
+/**
+ * Hono アプリケーションの作成
+ * @param options
+ * @returns
+ */
+export const createApp = (options: CreateAppOptions = {}): Hono => {
+  const app = new Hono();
+  const mcpServer = new McpServer({
+    name: "x402-weather-payment-mcpserver",
+    version: "1.0.0",
+  });
+
+  let transport: StreamableHTTPTransport | null = null;
+  let currentEnv: X402FetchClientEnv | null = null;
+
+  // テスト時などに env が未設定でも落ちないように最小値を返す。
+  const getEnv = () =>
+    currentEnv ?? {
+      CLIENT_PRIVATE_KEY: "",
+      X402_SERVER_URL: "",
+    };
+  const getWeatherToolDepsFactory = options.getWeatherToolDepsFactory ?? createDefaultGetWeatherToolDeps;
+
+  registerGetWeatherTool(mcpServer, getWeatherToolDepsFactory(getEnv));
+
+  // MCP サーバーは 1 接続を再利用し、必要時のみ接続する。
+  const connectServerIfNeeded = async (): Promise<StreamableHTTPTransport> => {
+    if (mcpServer.isConnected() && transport) {
+      return transport;
+    }
+
+    transport = new StreamableHTTPTransport();
+    await mcpServer.connect(transport);
+    return transport;
+  };
+
+  // DELETE 時に接続を明示クローズし、次回リクエストで再接続できる状態に戻す。
+  const closeServerConnection = async (): Promise<void> => {
+    if (transport) {
+      await transport.close();
+      transport = null;
+    }
+
+    if (mcpServer.isConnected()) {
+      await mcpServer.close();
+    }
+  };
+
+  app.use("/mcp", cors());
+
+  app.get("/", (c) => {
+    return c.json({
+      status: "ok",
+      service: "mcpserver",
+    });
+  });
+
+  // Streamable HTTP transport で MCP の POST/GET/DELETE を処理する。
+  app.all("/mcp", async (c) => {
+    currentEnv = c.env as X402FetchClientEnv;
+    const currentTransport = await connectServerIfNeeded();
+
+    try {
+      return await currentTransport.handleRequest(c);
+    } finally {
+      if (c.req.method === "DELETE") {
+        await closeServerConnection();
+      }
+    }
+  });
+
+  return app;
+};
+
+const app = createApp();
+
+export default app;
+```
+
+x402クライアントの設定も必要なのですが、それは`x402-fetch-client.ts`というファイルに実装されています！
+
+```ts
+.
+.
+<省略>
+.
+.
+
+/**
+ * X402FetchClientクラス
+ */
+export class X402FetchClient {
+  constructor(
+    private readonly baseUrl: string,
+    private readonly paymentFetch: typeof fetch,
+  ) {}
+
+  // x402 決済付きで /weather を呼び出し、失敗時は原因が分かるエラーへ変換する。
+  async fetchWeather(city: string): Promise<WeatherData> {
+    const url = new URL("/weather", this.baseUrl);
+    url.searchParams.set("city", city);
+
+    let response: Response;
+
+    try {
+      response = await this.paymentFetch(url.toString(), {
+        method: "GET",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      throw new Error(`x402server connection failed: ${message}`);
+    }
+
+    if (response.status === 402) {
+      const detail = await parseErrorMessage(response);
+      throw new Error(`x402 payment failed (402): ${detail}`);
+    }
+
+    if (!response.ok) {
+      const detail = await parseErrorMessage(response);
+      const location = ` at ${url.toString()}`;
+      const hint = response.status === 404 ? " (check X402_SERVER_URL points to x402server)" : "";
+      throw new Error(`weather request failed (${response.status})${location}: ${detail}${hint}`);
+    }
+
+    return (await response.json()) as WeatherData;
+  }
+}
+
+/**
+ * X402FetchClientインスタンスを作成するメソッド
+ */
+export const createX402FetchClient = (
+  env: X402FetchClientEnv,
+  deps: X402FetchClientDeps = defaultDeps,
+): X402FetchClient => {
+  validateEnv(env);
+
+  // 不正な秘密鍵はここで即座に検出する。
+  let account: ReturnType<typeof privateKeyToAccount>;
+  try {
+    account = deps.privateKeyToAccount(env.CLIENT_PRIVATE_KEY as `0x${string}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown error";
+    throw new Error(`CLIENT_PRIVATE_KEY is invalid: ${message}`);
+  }
+
+  // バインディングされたサービスからx402サーバーの情報を取得する
+  const serviceBinding = getServiceBinding(env);
+  // Service Binding がある場合は binding.fetch を使い、なければ通常 fetch を使う。
+  const fetchImpl = serviceBinding ? serviceBinding.fetch.bind(serviceBinding) : deps.fetchImpl;
+
+  // wrapFetch により 402 応答時の再試行/支払いフローが透過的に有効化される。
+  const paymentFetch = deps.wrapFetchWithPaymentFromConfig(fetchImpl, {
+    schemes: [
+      {
+        network: "eip155:*",
+        client: deps.createSchemeClient(account),
+      },
+    ],
+  });
+
+  return new X402FetchClient(resolveBaseUrl(env), paymentFetch);
+};
+```
+
+天気予報の情報を取得するためのツールの内容は以下の通りです！
+
+```ts
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import {
+  createX402FetchClient,
+  type WeatherData,
+  type X402FetchClient,
+  type X402FetchClientEnv,
+} from "../x402-fetch-client";
+
+type WeatherFetchClient = Pick<X402FetchClient, "fetchWeather">;
+
+type GetWeatherToolDeps = {
+  createClient: (env: X402FetchClientEnv) => WeatherFetchClient;
+  getEnv: () => X402FetchClientEnv;
+};
+export type { GetWeatherToolDeps };
+
+type GetWeatherToolInput = z.infer<typeof getWeatherInputSchema>;
+
+const buildErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "unknown error";
+};
+
+// MCP ツール入力の最小バリデーション（空文字 city を拒否）
+export const getWeatherInputSchema = z.object({
+  city: z.string().min(1, "city is required"),
+});
+
+// MCP レスポンスとして返しやすいプレーンテキストへ整形する。
+export const formatWeatherText = (weather: WeatherData): string => {
+  return [
+    `City: ${weather.city}`,
+    `Condition: ${weather.condition}`,
+    `Temperature: ${weather.temperatureC}°C`,
+    `Humidity: ${weather.humidity}%`,
+  ].join("\n");
+};
+
+export const createGetWeatherToolHandler = (deps: GetWeatherToolDeps) => {
+  // 各呼び出し時点で env からクライアントを生成し、最新設定を反映する。
+  return async ({ city }: GetWeatherToolInput) => {
+    try {
+      const client = deps.createClient(deps.getEnv());
+      const weather = await client.fetchWeather(city);
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: formatWeatherText(weather),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text" as const,
+            text: `Failed to fetch weather: ${buildErrorMessage(error)}`,
+          },
+        ],
+      };
+    }
+  };
+};
+
+export const registerGetWeatherTool = (server: McpServer, deps: GetWeatherToolDeps): void => {
+  // MCP クライアントから見えるツール名は get_weather で固定する。
+  server.registerTool(
+    "get_weather",
+    {
+      title: "Get Weather",
+      description: "Get current weather information for a specified city",
+      inputSchema: getWeatherInputSchema,
+    },
+    createGetWeatherToolHandler(deps),
+  );
+};
+
+export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv): GetWeatherToolDeps => {
+  // 依存注入を1か所にまとめ、テストでは差し替えやすくする。
+  return {
+    createClient: createX402FetchClient,
+    getEnv,
+  };
+};
+```
+
+> 今回一番ハマったポイント
+
+これ今回初めて知ったのですが、Workersから別のWorkersを呼び出す時にはURLで直接指定して呼び出すことはできずバインディングする必要があります。
+
+その設定を`wrangler.jsonc`ファイルに登録する必要があります。
+
+```json
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcpserver",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-02-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "services": [
+    {
+      "binding": "X402SERVER",
+      "service": "x402server"
+    }
+  ]
+}
+```
+
 ## Cloudflare Workersへのデプロイ方法！
 
 ではコードの解説が終わったのでデプロイする方法を解説していきたいと思います！
@@ -436,15 +735,9 @@ x402サーバーの実装の解説は以上です！
 
 - セットアップ
 
-  環境変数用のファイルを作成
+  X402サーバーがWorkersにデプロイ済みであることが条件になります！
 
-  ```bash
-  cp pkgs/mcpserver/.dev.vars.example pkgs/mcpserver/.dev.vars
-  ```
-
-  `X402_SERVER_URL`には上記でCloudFlare Workersにデプロイしたx402バックエンドサーバーのAPIエンドポイントURLを指定する
-
-  (Cloudflare Workersにデプロイする場合)x402クライアント用の秘密鍵とx402バックエンドサーバーのエンドポイントの登録
+  x402クライアント用の秘密鍵とx402バックエンドサーバーのエンドポイントの登録が必要なのですがこれは機密性の高い情報なので`Secret`機能を使って登録します！
 
   ```bash
   pnpm mcpserver run secret CLIENT_PRIVATE_KEY --name mcpserver
