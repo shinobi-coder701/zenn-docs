@@ -6,6 +6,8 @@ topics: ["ai", "Stripe", "Tempo", "Web3", "Blockchain"]
 published: false
 ---
 
+> この記事はAIと力を合わせて執筆しました！
+
 # はじめに
 
 みなさん、こんにちは！
