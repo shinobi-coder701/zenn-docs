@@ -715,17 +715,17 @@ export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv
 
 ではコードの解説が終わったのでデプロイする方法を解説していきたいと思います！
 
+### セットアップ
+
+まず依存関係をインストールします！
+
+```bash
+pnpm i
+```
+
 ### x402バックエンドサーバー
 
-- セットアップ
-
-  環境変数用のファイルを作成
-
-  ```bash
-  cp pkgs/x402server/.dev.vars.example pkgs/x402server/.dev.vars
-  ```
-
-- デプロイ
+- **デプロイ**
 
   ```bash
   pnpm x402server run deploy
@@ -733,7 +733,8 @@ export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv
 
 ### MCPサーバー
 
-- セットアップ
+- **セットアップ**
+
 
   X402サーバーがWorkersにデプロイ済みであることが条件になります！
 
@@ -744,7 +745,7 @@ export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv
   pnpm mcpserver run secret X402_SERVER_URL --name mcpserver
   ```
 
-- デプロイ
+- **デプロイ**
 
   ```bash
   pnpm mcpserver run deploy
@@ -752,7 +753,7 @@ export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv
 
   `https://mcpserver.<固有値>.workers.dev/mcp`をGPT AppのURLに登録すればチャットからx402の支払いができます！
 
-# ChatGPTのチャットインターフェース内から呼び出す方法
+# ChatGPTのチャット内から呼び出す方法
 
 1. MCPサーバーのエンドポイントをGPT Appに登録する
 2. +ボタンから追加したアプリを選んで追加した状態で天気予報を教えてもらう
@@ -768,7 +769,13 @@ export const createDefaultGetWeatherToolDeps = (getEnv: () => X402FetchClientEnv
 
 # まとめ
 
+今回は以上になります！
 
+AWSのLambdaとかAgentCoreとか使っても同じようなことはできますが、もっと手軽にサクッと試したい場合は**Cloudflare Workers**がおすすめです！
+
+x402用のサンプルコードの説明も豊富なのでめちゃくちゃ相性が良いです！
+
+ここまで読んでいただきありがとうございました！
 
 # 参考文献
 
