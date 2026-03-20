@@ -18,7 +18,7 @@ I have also written a separate article about **Tempo**, so please check that out
 
 ![](/images/mpp-machine-payments-protocol/0.png)
 
-https://zenn.dev/mashharuki/articles/stripe-tempo-introduction
+https://dev.to/mashharuki/the-ultimate-guide-to-stripes-payment-focused-l1-tempo-dissecting-the-new-standard-for-the-1d1m
 
 In this article, I will thoroughly analyze this protocol, which "realizes" the HTTP 402 status code after 20 years, from an engineer's perspective.
 
