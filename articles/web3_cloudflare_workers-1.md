@@ -112,7 +112,6 @@ https://github.com/mashharuki/vibekanban-gitworktree-sample
 | ----------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
 | `pkgs/x402server`       | 天気 API と x402 決済検証を提供するバックエンド                          | Hono / x402 / Cloudflare Workers / TypeScript                     |
 | `pkgs/mcpserver`        | GPT App から呼び出される MCP サーバー。`x402server` を決済付きで呼び出す | Hono MCP / MCP SDK / x402 fetch / Cloudflare Workers / TypeScript |
-| `pkgs/*/__tests__`      | 単体・結合テスト群                                                       | Vitest                                                            |
 | ルート (`package.json`) | monorepo の共通スクリプト・ワークスペース管理                            | pnpm workspace                                                    |
 
 ## 実装した機能一覧
@@ -132,9 +131,290 @@ https://github.com/mashharuki/vibekanban-gitworktree-sample
 
 ## x402サーバー編
 
+まずx402サーバーの方からになります！
+
+環境変数を設定するので`wrangler.jsonc`に環境変数の設定が必要になります。
+
+今回は機密性の高いものはないので**Secret**の機能は使いません。
+
+```json
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "x402server",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-02-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "SERVER_WALLET_ADDRESS": "0x51908F598A5e0d8F1A3bAbFa6DF76F9704daD072",
+    "FACILITATOR_URL": "https://x402.org/facilitator",
+    "X402_PRICE_USD": "$0.01",
+    "X402_NETWORK": "eip155:84532"
+  }
+}
+```
+
+x402サーバーは**Hono**をベースに作っています！  
+メインとなるコードは`src/app.ts`になります。
+
+特定のルートに対してのみx402のミドルウェアが適用されるようになっています。
+
+```ts
+import { paymentMiddleware } from "@x402/hono";
+import { Hono } from "hono";
+import { createRoutes } from "./route";
+import { createResourceServer, resolvePaymentOptions } from "./utils/config";
+import type { CreateAppOptions, ErrorResponse, WeatherService } from "./utils/types";
+import { createMockWeatherService } from "./weather/service";
+
+const toErrorResponse = (statusCode: number, message: string): ErrorResponse => ({
+  statusCode,
+  message,
+});
+
+/**
+ * Hono アプリケーションを作成します。
+ * @param weatherService
+ * @param options
+ * @returns
+ */
+export const createApp = (
+  weatherService: WeatherService = createMockWeatherService(),
+  options: CreateAppOptions = {},
+): Hono => {
+  // Hono アプリ本体。テスト時は createApp に依存を差し込んで利用する。
+  const app = new Hono();
+
+  const enablePayment = options.enablePayment ?? true;
+
+  if (enablePayment) {
+    const paymentOptions = resolvePaymentOptions(options.payment);
+    const resourceServer = createResourceServer(paymentOptions);
+    const routes = createRoutes(paymentOptions);
+    const protectedRouteKeys = new Set(Object.keys(routes));
+    let resourceServerInitialization: Promise<void> | null = null;
+
+    // 保護対象ルートの初回アクセス時のみ resource server を初期化する。
+    app.use(async (c, next) => {
+      const routeKey = `${c.req.method.toUpperCase()} ${c.req.path}`;
+
+      if (!protectedRouteKeys.has(routeKey)) {
+        return next();
+      }
+
+      if (!resourceServerInitialization) {
+        resourceServerInitialization = resourceServer.initialize().catch((error) => {
+          resourceServerInitialization = null;
+          throw error;
+        });
+      }
+
+      await resourceServerInitialization;
+      return next();
+    });
+
+    // x402 検証ミドルウェア。createRoutes で定義したルートにのみ課金を適用する。
+    app.use(paymentMiddleware(routes, resourceServer, undefined, undefined, false));
+  }
+
+  app.get("/", (c) => {
+    return c.json({ status: "ok" }, 200);
+  });
+
+  /**
+   * ヘルスチェック用のルート
+   */
+  app.get("/health", (c) => {
+    return c.json({ status: "ok" }, 200);
+  });
+
+  /**
+   * 天気情報を取得するルート
+   */
+  app.get("/weather", async (c) => {
+    const city = c.req.query("city")?.trim();
+
+    if (!city) {
+      return c.json(toErrorResponse(400, "city query parameter is required"), 400);
+    }
+
+    try {
+      const weather = await weatherService.getWeatherByCity(city);
+
+      if (!weather) {
+        // 入力自体は妥当だが対象都市が未登録のケース。
+        return c.json(toErrorResponse(404, "city not found"), 404);
+      }
+
+      return c.json(weather, 200);
+    } catch {
+      // 外部 API 障害など、サービス内部失敗は 503 で返す。
+      return c.json(toErrorResponse(503, "weather service unavailable"), 503);
+    }
+  });
+
+  return app;
+};
+```
+
+天気予報を取得するロジックについてですが、今回は検証目的ということもあり外部のAPI等を叩いているのではなく決めうちのデモデータを返す実装としています。
+
+プロダクションレベルで作る場合はここが外部のAPIになるイメージです。
+
+```ts
+import { WeatherData, WeatherService } from "../utils/types";
+
+// モックの天気予報データ
+const MOCK_WEATHER_DATA: ReadonlyArray<WeatherData> = [
+  {
+    city: "Tokyo",
+    condition: "Sunny",
+    temperatureC: 28,
+    humidity: 60,
+  },
+  {
+    city: "Osaka",
+    condition: "Cloudy",
+    temperatureC: 26,
+    humidity: 65,
+  },
+  {
+    city: "New York",
+    condition: "Rainy",
+    temperatureC: 22,
+    humidity: 72,
+  },
+];
+
+const normalizeCity = (city: string): string => {
+  // 引用符付き入力や "Tokyo, JP" のような表記ゆれを吸収する。
+  const trimmed = city.trim().replace(/^['\"]+|['\"]+$/g, "");
+  const withoutCountry = trimmed.split(",")[0]?.trim() ?? trimmed;
+
+  return withoutCountry.toLowerCase();
+};
+
+/**
+ * モックの天気予報を提供するWeatherServiceの実装を作成するファクトリーメソッド
+ * @returns
+ */
+export const createMockWeatherService = (): WeatherService => {
+  return {
+    async getWeatherByCity(city: string): Promise<WeatherData | null> {
+      const normalized = normalizeCity(city);
+
+      // 都市名の正規化結果で比較し、大小文字差を無視して検索する。
+      const weather = MOCK_WEATHER_DATA.find((item) => normalizeCity(item.city) === normalized);
+
+      return weather ?? null;
+    },
+  };
+};
+```
+
+**x402**固有の設定は`src/utils/config.ts`にまとめてあります！
+
+x402サーバーの実装にはファシリテーターやリソースサーバーの設定が必要になります。
+
+ここでは詳細を省きますが、ファシリテーターはx402を適用させたいAPIとブロックチェーンをつなぐ橋渡し的な要素で存在しており、支払いのための署名検証・トランザクション送信を担っています。
+
+> ファシリテーターの詳細は以下の技術ブログでわかりやすく紹介されています！
+
+https://zenn.dev/komlock_lab/articles/270e9273f3e7ec
+
+ファシリテーターはオプションで自力で実装しても良いということにはなっていますが労力がかかりますので使用が推奨されています。
+
+```ts
+import { x402Client } from "@x402/axios";
+import { HTTPFacilitatorClient, x402ResourceServer } from "@x402/core/server";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
+import type { PaymentOptions, ResolvedPaymentOptions } from "./types";
+
+// クライアントインスタンスを作成
+export const client = new x402Client();
+
+/**
+ * 必須の支払い設定をチェックするメソッド
+ * @param value
+ * @param key
+ * @returns
+ */
+const requiredPaymentConfig = (value: string | undefined, key: string) => {
+  if (value?.trim()) {
+    return value;
+  }
+
+  throw new Error(`Missing required payment configuration: ${key}`);
+};
+
+/**
+ * ファシリテーターURLを正規化します。
+ * 特に、旧URLである https://facilitator.x402.org を https://x402.org/facilitator に変換します。
+ * @param rawUrl
+ * @returns
+ */
+const normalizeFacilitatorUrl = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+
+  if (trimmed === "https://facilitator.x402.org") {
+    return "https://x402.org/facilitator";
+  }
+
+  const parsed = new URL(trimmed);
+  if (parsed.hostname === "x402.org" && parsed.pathname === "/") {
+    parsed.pathname = "/facilitator";
+    return parsed.toString().replace(/\/$/, "");
+  }
+
+  return trimmed;
+};
+
+/**
+ * 必須の支払い設定を取得します
+ * @param payment
+ * @returns
+ */
+export const resolvePaymentOptions = (payment: PaymentOptions = {}): ResolvedPaymentOptions => {
+  // 引数優先、未指定時は環境変数にフォールバックする。
+  const facilitatorUrl = requiredPaymentConfig(
+    payment.facilitatorUrl ?? process.env.FACILITATOR_URL,
+    "FACILITATOR_URL",
+  );
+  const normalizedFacilitatorUrl = normalizeFacilitatorUrl(facilitatorUrl);
+
+  return {
+    payTo: requiredPaymentConfig(payment.payTo ?? process.env.SERVER_WALLET_ADDRESS, "SERVER_WALLET_ADDRESS"),
+    facilitatorUrl: normalizedFacilitatorUrl,
+    price: requiredPaymentConfig(payment.price ?? process.env.X402_PRICE_USD, "X402_PRICE_USD"),
+    network: requiredPaymentConfig(payment.network ?? process.env.X402_NETWORK, "X402_NETWORK"),
+    facilitatorClient:
+      payment.facilitatorClient ??
+      new HTTPFacilitatorClient({
+        url: normalizedFacilitatorUrl,
+      }),
+  };
+};
+
+/**
+ * リソースサーバーインスタンスを作成する
+ * @param paymentOptions
+ * @returns
+ */
+export const createResourceServer = (paymentOptions: ResolvedPaymentOptions) => {
+  // ネットワークごとの検証スキームを登録した resource server を生成する。
+  return new x402ResourceServer(paymentOptions.facilitatorClient).register(
+    paymentOptions.network as `${string}:${string}`,
+    new ExactEvmScheme(),
+  );
+};
+```
+
+x402サーバーの実装の解説は以上です！
+
 ## MCPサーバー編
 
 ## Cloudflare Workersへのデプロイ方法！
+
+ではコードの解説が終わったのでデプロイする方法を解説していきたいと思います！
 
 ### x402バックエンドサーバー
 
@@ -177,9 +457,9 @@ https://github.com/mashharuki/vibekanban-gitworktree-sample
   pnpm mcpserver run deploy
   ```
 
-  `https://mcpserver.<固有値>.workers.dev/mcp`をGPT AppのURLに登録すればチャットからx402の支払いができる！
+  `https://mcpserver.<固有値>.workers.dev/mcp`をGPT AppのURLに登録すればチャットからx402の支払いができます！
 
-## ChatGPTのチャットインターフェース内から呼び出す方法
+# ChatGPTのチャットインターフェース内から呼び出す方法
 
 1. MCPサーバーのエンドポイントをGPT Appに登録する
 2. +ボタンから追加したアプリを選んで追加した状態で天気予報を教えてもらう
@@ -191,7 +471,11 @@ https://github.com/mashharuki/vibekanban-gitworktree-sample
 
     ![](/images/web3_cloudflare_workers-1/11.png)
 
-4. 検証が終わったら必ずサーバーを落とし、MCPサーバーの接続も解除する。
+4. 検証が終わったら必ずサーバーを落とし、MCPサーバーの接続も解除して終わりです！
+
+# まとめ
+
+
 
 # 参考文献
 
