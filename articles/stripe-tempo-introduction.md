@@ -6,7 +6,9 @@ topics: ["Tempo", "Stripe", "ai", "Web3", "Blockchain"]
 published: true
 ---
 
-> この記事はAIと力を合わせて執筆しました！
+:::message
+この記事はAIと力を合わせて執筆しました！
+:::
 
 # はじめに
 
