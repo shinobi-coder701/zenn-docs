@@ -3,7 +3,7 @@ title: "Motia × Strands Agent SDKで作るAIエージェント開発入門3"
 emoji: "🐳"
 type: "tech"
 topics: ["aws", "cdk", "AI", "StrandsAgent", "motia"]
-published: false
+published: true
 ---
 
 ## はじめに
