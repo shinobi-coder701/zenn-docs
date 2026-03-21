@@ -3,7 +3,7 @@ title: "11ElevenLabs SDKを使って音声AI AgentをAWS上にデプロイして
 emoji: "🎙️"
 type: "tech" 
 topics: ["ai","react","typescript","aws","cdk"]
-published: false
+published: true
 ---
 
 # はじめに
