@@ -3,7 +3,7 @@ title: "Sera Protocol × Tempo × MPP で実現する究極のクロスボーダ
 emoji: "💱"
 type: "tech"
 topics: ["ethereum", "stablecoin", "ai", "Stripe", "Web3"]
-published: false
+published: true
 ---
 
 :::message
