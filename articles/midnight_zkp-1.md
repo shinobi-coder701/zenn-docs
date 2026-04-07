@@ -4,6 +4,7 @@ emoji: "🧙‍♀️"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["blockchain", "cardano", "privacy", "zeroknowledge", "typescript"]
 published: true
+publication_name: "midnight"
 ---
 
 ![](/images/midnight_zkp-1/title.png)

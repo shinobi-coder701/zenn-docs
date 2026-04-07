@@ -4,6 +4,7 @@ emoji: "🔐"
 type: "tech" 
 topics: ["blockchain", "cardano", "typescript", "privacy", "zkp"]
 published: true
+publication_name: "midnight"
 ---
 
 ![](/images/cardano_midnight_1/0.png)
