@@ -1,5 +1,5 @@
 ---
-title: "Midnight on Cardano: A Practical Guide to Privacy, Zero-Knowledge Proofs, and Compact"
+title: "Building Private Web3 on Cardano: Midnight, ZK Proofs, and Compact"
 emoji: "🧙‍♀️"
 type: "tech"
 topics: ["blockchain", "cardano", "privacy", "zeroknowledge", "typescript"]
