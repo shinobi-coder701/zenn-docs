@@ -85,7 +85,7 @@ graph TD
         A[🔏 private: Private state<br>e.g. user's personal counter] --> B;
     end
     subgraph "Transaction input"
-        B[🤝 witness: Proof input<br>e.g. "my previous value was 5"] --> C{Circuit execution};
+      B[🤝 witness: Proof input<br>e.g. my previous value was 5] --> C{Circuit execution};
     end
     subgraph "Midnight blockchain (on-chain)"
          D[📢 public: Public state<br>e.g. total update count] --> C;
