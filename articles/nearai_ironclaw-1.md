@@ -14,9 +14,19 @@ published: false
 
 ## IronClawの概要・特徴
 
+### 主要機能
+
+### IronClawの4層セキュリティアーキテクチャ
+
 ## IronClawでできること
 
+OpenClawライクな実装になっているのでOpenClawにできることは一通りできそうでした。
+
+チャットはもちろんのこと、SKILLを追加したり、マークダウンファイルで設定を変えたり、MCPを接続したりすることが可能でした。
+
 ## OpenClawとの違い
+
+## NEAR AI CloudでのTEEという選択肢
 
 # IronClawのはじめ方
 
@@ -29,3 +39,4 @@ starterだと無料
 
 ## 数クリックでデプロイ！
 
+# 参考文献
