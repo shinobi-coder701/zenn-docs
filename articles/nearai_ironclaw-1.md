@@ -132,6 +132,8 @@ https://agent.near.ai/
 
 そのあとプランを選択します。
 
+![](/images/nearai_ironclaw-1/6.png)
+
 **Starter**プランであれば無料で始めることができます!
 
 > まずはこのプランから始めてみるのをおすすめします！
@@ -139,6 +141,24 @@ https://agent.near.ai/
 ## ワンクリックでデプロイ！
 
 **Deploy**ボタン押すと**Near AI Cloud**上に**IronClaw**のインスタンスがデプロイされます！
+
+![](/images/nearai_ironclaw-1/1.png)
+
+LLMにはデフォルトで**Qwen**が設定されていました。
+
+## 色々試してみよう！
+
+デプロイした後は色々試してみましょう！
+
+![](/images/nearai_ironclaw-1/2.png)
+
+チャットするもよし、SKILLを追加するもよし、MCPを追加するもよしです！
+
+![](/images/nearai_ironclaw-1/3.png)
+
+![](/images/nearai_ironclaw-1/4.png)
+
+![](/images/nearai_ironclaw-1/5.png)
 
 # まとめ
 
