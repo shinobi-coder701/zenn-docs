@@ -3,7 +3,7 @@ title: "Unleashing IronClaw: The Secure, Rust-Based AI Agent Framework by NearAI
 published: true
 tags: ai, near, rust, security
 canonical_url: https://zenn.dev/harukikondo/articles/nearai_ironclaw-1
-cover_image: https://raw.githubusercontent.com/harukikondo/zenn-docs/main/images/nearai_ironclaw-1/0.png
+cover_image: https://raw.githubusercontent.com/mashharuki/zenn-docs/main/images/nearai_ironclaw-1/0.png
 ---
 
 ## Introduction: The Rise of Secure AI Agents
@@ -18,7 +18,7 @@ In this post, we’ll dive deep into what makes IronClaw the "Iron Man suit" for
 
 ## What is IronClaw?
 
-![IronClaw Overview](https://raw.githubusercontent.com/harukikondo/zenn-docs/main/images/nearai_ironclaw-1/0.png)
+![IronClaw Overview](https://raw.githubusercontent.com/mashharuki/zenn-docs/main/images/nearai_ironclaw-1/0.png)
 
 **IronClaw** is an open-source AI Agent framework developed by **Near AI**. It is designed to run in secure environments like **NEAR AI Cloud**, allowing agents to autonomously operate tools (Google Workspace, GitHub, etc.) while keeping user credentials strictly confidential.
 
@@ -73,16 +73,16 @@ IronClaw employs a "Defense in Depth" strategy, ensuring data passes through fou
 Head over to the [Near AI Agent Dashboard](https://agent.near.ai/).
 
 ### 2. Choose Your Plan
-![Plan Selection](https://raw.githubusercontent.com/harukikondo/zenn-docs/main/images/nearai_ironclaw-1/6.png)
+![Plan Selection](https://raw.githubusercontent.com/mashharuki/zenn-docs/main/images/nearai_ironclaw-1/6.png)
 The **Starter** plan is free and perfect for getting your feet wet.
 
 ### 3. One-Click Deployment
 Click the **Deploy** button to spin up your IronClaw instance on NEAR AI Cloud.
-![Deployment](https://raw.githubusercontent.com/harukikondo/zenn-docs/main/images/nearai_ironclaw-1/1.png)
+![Deployment](https://raw.githubusercontent.com/mashharuki/zenn-docs/main/images/nearai_ironclaw-1/1.png)
 The default LLM is typically set to **Qwen**, but you can customize this.
 
 ### 4. Experiment!
-![Dashboard](https://raw.githubusercontent.com/harukikondo/zenn-docs/main/images/nearai_ironclaw-1/2.png)
+![Dashboard](https://raw.githubusercontent.com/mashharuki/zenn-docs/main/images/nearai_ironclaw-1/2.png)
 Try chatting with your agent, adding new Skills, or connecting MCP (Model Context Protocol) servers.
 
 ## Conclusion
