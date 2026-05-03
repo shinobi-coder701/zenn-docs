@@ -703,6 +703,26 @@ Near AI Cloudで即座にデプロイ。
 
 ---
 
+![bg](./../images/nearai_ironclaw-1/7.png)
+
+---
+
+![bg](./../images/nearai_ironclaw-1/8.png)
+
+---
+
+![bg](./../images/nearai_ironclaw-1/9.png)
+
+---
+
+![bg](./../images/nearai_ironclaw-1/11.png)
+
+---
+
+![bg](./../images/nearai_ironclaw-1/12.png)
+
+---
+
 <!-- _class: ending -->
 
 # Thank you!
