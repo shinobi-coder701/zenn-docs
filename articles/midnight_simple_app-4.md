@@ -57,6 +57,16 @@ bun 1.3.13
 node 23.3.0
 ```
 
+## 事前準備
+
+もし**LaceWallet**をまだブラウザにインストールしていない場合は以下のサイトにアクセスしてインストールしてください。
+
+https://www.lace.io/
+
+インストール後にMidnight用のウォレットアカウントを作成してください。
+
+> 作成後、PreProd Networkに切り替えてください。
+
 ## 0. Git リポジトリのクローン
 
 ```bash
@@ -93,6 +103,25 @@ ZK 証明の生成を担うサーバーを Docker で立ち上げるます！
 
 ```bash
 docker run -d -p 127.0.0.1:6300:6300 midnightntwrk/proof-server:8.0.3 midnight-proof-server
+```
+
+### 4. PreProdネットワークにコントラクトをデプロイする
+
+もしPreProd用のfaucetを持っていなかった場合は以下のサイトから入手してきてください！
+
+https://faucet.preprod.midnight.network/
+
+```bash
+bun cli preprod-pts
+```
+
+しばらく時間がかかるかもしれませんがもしうまくいったらコンソールに以下のような情報が出力されるはずです！
+
+```bash
+[19:24:25.997] INFO (40223): Deploying RPS contract...
+  ⠇ Deploying RPS contract[19:24:51.416] INFO (40223): Deployed RPS contract at: 23149945fed06aa010cc3e48e9f5df91625567300fae4e09371bb788d07a6bd8
+  ✓ Deploying RPS contract
+  Contract deployed at: 23149945fed06aa010cc3e48e9f5df91625567300fae4e09371bb788d07a6bd8
 ```
 
 ---
