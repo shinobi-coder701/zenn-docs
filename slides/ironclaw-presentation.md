@@ -402,7 +402,7 @@ Haruki | AWS Community Builder
 
 ---
 
-![bg](./../images/slides/me.png)
+![bg](./../images/slides/me.jpeg)
 
 ---
 
