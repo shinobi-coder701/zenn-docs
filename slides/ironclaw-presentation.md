@@ -402,6 +402,10 @@ Haruki | AWS Community Builder
 
 ---
 
+![bg](./../images/slides/me.png)
+
+---
+
 # 本日のゴール
 
 <div class="card accent">
