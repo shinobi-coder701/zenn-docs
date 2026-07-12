@@ -25,6 +25,10 @@ publication_name: "midnight"
 
 ![RPS dApp Hero](/images/midnight_simple_app-4/0.png)
 
+## アプリのデモ
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/jmUyDCOBVCY?si=zyYqx9nD-gZkc2h1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## この記事で学べること
 
 - Midnight における「隠す」と「見せる」の切り分け設計
