@@ -27,7 +27,7 @@ publication_name: "midnight"
 
 ## アプリのデモ
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/jmUyDCOBVCY?si=zyYqx9nD-gZkc2h1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+https://www.youtube.com/embed/jmUyDCOBVCY?si=zyYqx9nD-gZkc2h1
 
 ## この記事で学べること
 
