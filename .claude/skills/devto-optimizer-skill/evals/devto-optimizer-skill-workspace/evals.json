@@ -1,0 +1,29 @@
+{
+  "skill_name": "devto-optimizer-skill",
+  "evals": [
+    {
+      "id": 0,
+      "name": "full-conversion-test",
+      "prompt": "Convert the following Zenn article content to Dev.to markdown. Make sure to handle the front matter, embeds, and messages correctly. Content:\n---\ntitle: 'Zenn to Dev.to Test'\nemoji: '🚀'\ntype: 'tech'\ntopics: ['nextjs', 'typescript']\npublished: true\n---\n# Getting Started\n\nWelcome to our test article.\n\n:::message\nThis is a test message.\n:::\n\n@[youtube](dQw4w9WgXcQ)\n\n```typescript:hello.ts\nconsole.log('Hello');\n```\n",
+      "expected_output": "Dev.to compatible markdown with Jekyll front matter, Liquid tags for YouTube, and blockquote for message.",
+      "assertions": [
+        "Contains Jekyll front matter with title, published, tags (nextjs, typescript)",
+        "First heading in body is ## Getting Started",
+        "Contains {% youtube dQw4w9WgXcQ %}",
+        "Contains blockquote for message (> **Note**)",
+        "Code block is ```typescript without filename, filename is a comment"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "math-and-details-test",
+      "prompt": "Optimize this Zenn snippet for Dev.to. It contains math and details blocks. Content:\n\n$$ e = mc^2 $$\n\n:::details Mathematical proof\nProof here...\n:::\n\n$1 + 1 = 2$\n",
+      "expected_output": "Markdown with {% katex %} blocks and <details> HTML tags.",
+      "assertions": [
+        "Contains {% katex %} e = mc^2 {% endkatex %}",
+        "Contains <details><summary>Mathematical proof</summary>",
+        "Contains {% katex inline %} 1 + 1 = 2 {% endkatex %}"
+      ]
+    }
+  ]
+}

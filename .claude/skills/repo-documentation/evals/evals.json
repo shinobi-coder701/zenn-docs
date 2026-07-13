@@ -1,0 +1,23 @@
+{
+  "skill_name": "repo-documentation",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "このリポジトリ何？使い方教えて",
+      "expected_output": "リポジトリの概要、技術スタック、ディレクトリ構成、機能一覧、セットアップ手順を日本語で出力。ファイルは作成せずチャット上に出力。",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "explain this repo and how to run it",
+      "expected_output": "Repository overview, tech stack, directory structure, features, and setup instructions in English. Output in chat, no file creation.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "このプロジェクトのREADMEを生成して",
+      "expected_output": "README.md ファイルを生成。技術スタック、ディレクトリ構成、機能一覧、セットアップ手順を含む包括的なREADME。",
+      "files": []
+    }
+  ]
+}
