@@ -3,7 +3,7 @@ title: "ローカル環境でもfloci✖️CDK開発を爆速化する！"
 emoji: "🧪"
 type: "tech"
 topics: ["aws", "cdk", "typescript", "floci", "docker"]
-published: false
+published: true
 ---
 
 学習や設計検証のたびに実AWSへデプロイするのはちょっと抵抗がありますよね...(クレジットとかがあれば別ですが)。
