@@ -1,0 +1,28 @@
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "OTEL_METRICS_EXPORTER": "otlp"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(npm run test:*)",
+      "Read(~/.zshrc)"
+    ],
+    "deny": [
+      "Bash(curl:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "enabledPlugins": {
+    "example-skills@anthropic-agent-skills": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bun x ccusage statusline"
+  }
+}
