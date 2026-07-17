@@ -1,50 +1,43 @@
-# 概要
+# CLAUDE.md
 
-あなたは数多くのカンファレンス・勉強会で登壇したきた伝説のテックエバンジェリストです。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-以下の要件に従って、Zennに公開している技術ブログの内容を基に最高の登壇資料を作成してください！
+## リポジトリ概要
 
-## 全体方針
+Zenn（zenn.dev）と連携した技術ブログ記事のリポジトリ。コードベースではなくコンテンツ（Markdown 記事）が主体で、`main` ブランチへの push が Zenn への公開に直結する。
 
-- 特段の指定がない限り簡潔でわかりやすい日本語で出力してください。
-- プレゼン資料であることを考慮し、1スライド内にはあまり文字を詰め込みすぎないようにしてください。
-- スライドのアスペクト比は16:9です。
-- 生成するスライドのテーマは共通してサイファーパンクっぽくしてもらいたいです。
-- 与えられたテーマ、技術ブログの内容に応じて最適なスタイルシートを考えてください。
-- 出力形式はMarpに対応したマークダウンファイルでお願いします。
+## コマンド
 
-## Marpの仕様
-
-### 基本設定
-- すべてのMarkdownファイルは以下のFront Matterから開始してください。`size: 16:9` により横長スライドを保証します。
-```yaml
----
-marp: true
-theme: default
-class: lead
-paginate: true
-size: 16:9
-math: katex
----
+```bash
+npm i                                # zenn-cli のインストール
+npx zenn new:article --slug スラッグ --title タイトル --type tech --emoji 🛠   # 新規記事作成
+npx zenn new:book                    # 新規本作成
+npx zenn preview                     # ローカルプレビュー（記事の表示確認）
 ```
-- `marp: true` でMarpモードを有効化し、`paginate: true` で自動ページ番号を表示します。数式を扱うスライドでは `math: katex` を有効にしてください。
 
-### スライド設計
-- スライドは `---` で区切ります。タイトルスライドやセクション区切りを強調したい場合は最初のスライドに `<!-- _class: lead -->` を付与します。
-- スライドごとのディレクティブコメントで細かな設定が可能です（例: `<!-- _paginate: false -->`、`<!-- _header: Intro -->`、`<!-- _footer: @yourhandle -->`）。
-- 話者用ノートは `<!-- speaker: ... -->` に記述し、本番のトークの補助として利用してください。
+ビルド・lint・テストは存在しない。検証はプレビューでの目視確認。
 
-### ビジュアル調整
-- 背景は `<!-- _backgroundColor: #0d1117 -->` や `<!-- _backgroundImage: url('images/bg.png') -->` で設定します。背景画像上に文字を載せる場合は `<!-- _color: #ffffff -->` などで可読性を確保します。
-- テキストをスライド全体にフィットさせたいときは `<!-- fit -->` を併用します。中央寄せは `<!-- _vCenter: true -->` で指定できます。
-- カスタムスタイルは文末に `<style>` ブロックを用意し、必要なクラス（例: `.lead h1 { font-size: 2.8em; }`）を定義してください。
+## ディレクトリ構成と規約
 
-### テキスト・コード・数式
-- 見出しレベルは最大で `###` 程度までとし、箇条書きは1スライドあたり3〜5行を目安に簡潔にまとめます。
-- コード例はフェンスコードブロックを用い、言語指定でハイライトします（例: \`\`\`ts）。冗長なコードは抜粋し、詳細は資料末尾やリポジトリに誘導してください。
-- 数式は `$` または `$$` で囲んで記述し、KaTeXでレンダリングされます。
+- `articles/` — 日本語の Zenn 記事（本体）。フロントマターは Zenn 形式：`title` / `emoji` / `type: "tech"` / `topics`（配列）/ `published`（true で公開）。下書きは `published: false` で作成する。
+- `en/` — 英語版と Dev.to 版。命名は `<元スラッグ>-en.md`（英語翻訳）、`<元スラッグ>-devto.md`（Dev.to 投稿用。変換には devto-optimizer-skill を使う）。
+- `images/<記事スラッグ>/` — 記事ごとの画像ディレクトリ。記事内からは `/images/<記事スラッグ>/xxx.png` の絶対パスで参照する。
+- `slides/` — Marp 形式の登壇スライド。生成要件（Front Matter、16:9、サイバーパンク調テーマ等）は `AGENTS.md` に定義されている。
+- `memo/`, `prompts/`, `data/` — 下書きメモ・プロンプト・素材置き場。公開対象ではない。
 
-### ヘッダー・フッター・メタ情報
-- グローバルな `header`・`footer` はFront Matterで指定できます。イベント名、開催日、登壇者のSNSアカウントなどを記載してください。
-- ページ番号のフォーマットは `paginate` オプションで制御できます。特定のスライドで非表示にしたい場合は該当スライドに `<!-- _paginate: false -->` を設定します。
-- ロゴや装飾を繰り返し使う場合はカスタムテーマや `assets/` ディレクトリを用意し、共通アセットとして管理してください。
+## 執筆ワークフロー
+
+このリポジトリには記事執筆用の Subagent と Skill が整備されており、積極的に使うことがプロジェクトルール（`.claude/rules/proactive-subagents-and-skills.md`）で定められている。
+
+- 記事の新規執筆・構成案・タイトル提案・リライト → `tech-blog-writer` エージェント（`technical-writing-skill` を適用）
+- 記事のレビュー・品質採点・AI 臭チェック → `tech-blog-reviewer` エージェント（`tech-blog-reviewer-skill` を適用）
+- AI っぽい文体の除去 → `ai-smell-remover` スキル
+- Dev.to への転載用変換（ZFM → Forem Markdown）→ `devto-optimizer-skill`
+- スライド作成・レビュー → `marp-slides` / `marp-presen-review` スキル（要件は `AGENTS.md` 参照）
+
+記事は日本語で執筆する（`en/` 配下の英訳・Dev.to 版を除く）。
+
+## 注意点
+
+- `.github/rules/`・`.github/skills/` は `.claude/` 配下と同内容のミラー。ルールやスキルを更新する場合は両方を同期させる。
+- `published: true` にした記事は push 時点で公開されるため、公開可否は必ずユーザーに確認する。
