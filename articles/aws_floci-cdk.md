@@ -512,3 +512,4 @@ Flociだけですべてを証明しようとすると無理が出ます。しか
 - [AWS CDK Developer Guide](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
 - [DynamoDB Global Tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html)
 - [AWS KMS Multi-Region keys](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html)
+- [Deepwiki - Flociの概要](https://deepwiki.com/search/floci-localstock_5f721375-3cc3-411e-8a20-8eb7f5eb7fa9)
