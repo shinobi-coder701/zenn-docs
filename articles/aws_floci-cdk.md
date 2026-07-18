@@ -12,6 +12,8 @@ published: true
 
 そこで、オープンソースのローカルAWSエミュレーター **Floci** とAWS CDKを組み合わせて爆速でローカル環境にて開発と検証のループを回せるか検証してみました！
 
+> Flociは、LocalStack Community Editionの代替として設計されています！
+
 実際に以下の4つのパターンのシステムを作ってみました。
 
 1. **単一リージョンのフルスタック Todoアプリ**
@@ -512,4 +514,4 @@ Flociだけですべてを証明しようとすると無理が出ます。しか
 - [AWS CDK Developer Guide](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
 - [DynamoDB Global Tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html)
 - [AWS KMS Multi-Region keys](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html)
-- [Deepwiki - Flociの概要](https://deepwiki.com/search/floci-localstock_5f721375-3cc3-411e-8a20-8eb7f5eb7fa9)
+- [Deepwiki - Flociの概要](https://deepwiki.com/search/floci_65433477-f938-41e6-b582-973331647819)
