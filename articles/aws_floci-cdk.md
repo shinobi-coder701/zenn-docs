@@ -49,6 +49,8 @@ https://floci.io/
 
 Flociの実装はJava 25とQuarkus 3.xが中心です。AWSのQuery、JSON 1.1、REST JSON、REST XMLといったワイヤープロトコルを再現するため、専用APIを覚えるのではなく、普段のAWS CLIやSDKをそのまま使えるのが特徴です。
 
+> GraalVM Native ImageでビルドされたQuarkusがベースとなっており、javaで作られているが高速
+
 とりあえず動かしてみたいという方は以下のDocker Compose用のyamlファイルを作って起動させれば立ち上がります！
 
 ```yaml:compose.yaml
