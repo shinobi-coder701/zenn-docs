@@ -3,7 +3,7 @@ title: "予測市場、賭けた瞬間に晒されるのが嫌だったのでゼ
 emoji: "🌙"
 type: "tech"
 topics: ["blockchain", "ゼロ知識証明", "typescript", "react", "web3"]
-published: false
+published: true
 publication_name: "midnight"
 ---
 
