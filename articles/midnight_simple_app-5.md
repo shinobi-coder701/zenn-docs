@@ -153,7 +153,9 @@ pure circuit make_prediction_commitment(
 `persistentHash` の第一要素に `"forecast:pick:v1"` という固定文字列を混ぜているのは、ドメイン分離(domain separation)と呼ばれる定石です。同じ入力値でも用途ごとに別のタグを混ぜておけば、別の回路で偶然同じハッシュ値が出て混同する という事故を防げます。参加者キーの導出(`derive_participant_key`)でも `"forecast:participant:v1"` という別のタグを使っています。
 
 :::message
-ソルトを混ぜているのは、賭け金が10〜500ポイントとかなり狭い範囲しかないからです。ソルトなしだと、4チーム×491通りの賭け金の組み合わせを総当たりでハッシュ化すれば、外部の観察者でもコミットメントから元の値を逆引きできてしまいます。ランダムなソルトを混ぜることで、その総当たりを実質不可能にしています。
+ソルトが必要な理由は、賭け金の範囲が狭いからではありません。`stake`（賭け金）は `commit_prediction` の時点で `stakes` に平文のまま書き込まれるので、外部の観察者にとって賭け金はそもそも推測不要な公開情報です。
+
+本当の弱点は `team` の選択肢が4つしかないことです。ソルトがなければ、観察者は「参加者キー・公開済みの賭け金」を使って team=0〜3 の4通りをそれぞれハッシュ化するだけで、どれが台帳上のコミットメントと一致するか一瞬で特定できてしまいます。ランダムな256bitのソルトを混ぜることで、この4択総当たりを不可能にしています。
 :::
 
 実際の画面では、チームと賭け金(Confidence points)を選んでから「Seal my forecast」を押します。
@@ -218,10 +220,23 @@ it("rejects a modified private prediction", () => {
 
 パリミュチュエル方式の報酬計算 `floor(総プール × 賭け金 / 勝ったチームのプール)` は、地味に面倒な部分でした。ZK回路の中で割り算をそのまま書きたくなかったので、この設計では「割り算の結果をクライアント側で計算し、その結果が正しいことだけを回路側で検証する」という形にしています。
 
+割り算より前に、実は「そもそもこの人は請求していいのか」を確認する前段があります。省略せずに全部載せます。
+
 ```compact
 export circuit claim_reward(reward: Uint<64>): [] {
   const public_reward = disclose(reward);
-  // ...
+  assert(phase == MarketPhase.resolved && result_set, "Market is not resolved");
+  const key = derive_participant_key(local_secret_key());
+  const public_key = disclose(key);
+  assert(revealed.member(public_key), "Prediction was not revealed");
+  assert(!claimed.member(public_key), "Reward already claimed");
+  const team = get_selected_team();
+  const salt = get_prediction_salt();
+  const stake = stakes.lookup(public_key);
+  const expected = make_prediction_commitment(key, team, stake, salt);
+  assert(disclose(expected == commitments.lookup(public_key)), "Prediction commitment mismatch");
+  assert(disclose(team == winning_team), "Prediction did not win");
+
   const winning_pool = pool_for(winning_team);
   const payout_numerator = total_pool * stake;
   assert(public_reward * winning_pool <= payout_numerator, "Reward exceeds pari-mutuel entitlement");
@@ -232,6 +247,12 @@ export circuit claim_reward(reward: Uint<64>): [] {
   total_claimed_rewards = (total_claimed_rewards + public_reward) as Uint<64>;
 }
 ```
+
+前半の5行は、`reveal_prediction` と同じ「witnessから読み直した値でコミットメントを再計算し、台帳と一致するか確認する」というパターンをもう一度やっています。これにより、他人の `stake` や `team` を騙って請求することはできません。加えて `revealed.member` で「そもそも開示済みか」、`!claimed.member` で「まだ請求していないか」、`team == winning_team` で「勝ったチームを選んでいたか」を確認しています。この4つのassertが揃って初めて、二重請求や他人の当選金の横取りが防がれます。
+
+:::message
+`total_pool * stake` のような掛け算はUint<64>同士でも、Compactの型システムが積の値域(`Uint<0..(2^64-1)^2>`)をそのまま保持するため、暗黙に64bit幅へ丸められて桁あふれする心配はありません(手元で `compact compile` して確認済みです)。実際、`Uint<64>` へ明示的に丸め込む箇所だけ `as Uint<64>` キャストが書かれています。
+:::
 
 `r = floor(n / p)` であることは、`r × p ≤ n < (r + 1) × p` という不等式に置き換えられます。この2本のassertがまさにそれで、掛け算と比較だけで「フロア除算の結果として正しいか」を判定しています。呼び出し側が都合よく大きい `reward` を渡してきても上の不等式のどちらかで弾かれますし、逆に小さすぎる値を渡しても弾かれます。
 
@@ -263,6 +284,12 @@ export const savePrediction = async (
 回路を呼ぶ前に、選んだチームとランダムなソルトをまずローカルのプライベートステートストアに保存します。witness の `get_selected_team` や `get_prediction_salt` は、証明生成のタイミングでこのローカルストアから値を読み出すだけです。
 
 裏を返すとこのローカルストアが消えたらもう詰みだということでもあります。README にもそのまま書いた注意書きがこちらです。
+
+:::message alert
+今の実装には、複数マーケットを併用する場合の制約もあります。`PredictionMarketPrivateStateId` はネットワーク・ウォレット単位の固定キーで、コントラクトアドレスごとには分かれていません。つまり同じウォレットで2つ目のマーケットに `commit_prediction` すると、その `store_prediction` が1つ目のマーケット用の `selectedTeam` / `salt` を上書きしてしまい、1つ目をリビールできなくなります。
+
+さらに `derive_participant_key` は `local_secret_key()` だけから決まる値なので、同じウォレットであれば `participant_key`(そして自分がデプロイした場合は公開情報である `admin_key` も)は別マーケットでも同じ値になります。単一マーケット内の「誰が何に賭けたか」は隠せていますが、「同じウォレットが複数のマーケットに関わっている」という横のつながりまでは隠せていない、という制約です。1マーケット完結のデモとしては割り切っていますが、複数マーケット運用を想定するなら `privateStateId` をコントラクトアドレスで分ける・鍵導出にマーケット固有の値を混ぜる、といった対応が必要です。
+:::
 
 :::message alert
 コミット後・開示前にブラウザのデータを消したり、別デバイスに乗り換えたりするとその予想は二度と開示できなくなります。
